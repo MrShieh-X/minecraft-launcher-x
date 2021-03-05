@@ -240,6 +240,9 @@ public class Settings extends JDialog {
             @Override
             public void actionPerformed(ActionEvent e) {
                 Settings.this.setVisible(false);
+                if(parent==null){
+                    System.exit(0);
+                }
             }
         });
 
@@ -275,18 +278,25 @@ public class Settings extends JDialog {
                     MCLX.datapackDir = new File(dataPackDir.getText());
                     MCLX.smDir = new File(smPath.getText());
 
-                    if(gameDir.getText().endsWith("/")||gameDir.getText().endsWith("\\")){
+                    /*if(gameDir.getText().endsWith("/")||gameDir.getText().endsWith("\\")){
                         MCLX.versionsDir=new File(gameDir.getText()+"versions");
                     }else{
                         //versionsDir=new File(gameDir.getAbsolutePath()+File.separator+"versions");
                         if(gameDir.getText().lastIndexOf("\\")!=-1){
-                            MCLX.versionsDir=new File(gameDir.getText()+"\\"+"versions");
                         }else{
                             MCLX.versionsDir=new File(gameDir.getText()+"/"+"versions");
                         }
-                    }
+                    }*/
 
+                }else{
+                    MCLX.gameDir = new File(".minecraft");
+                    MCLX.assetsDir = new File(MCLX.gameDir,"assets");
+                    MCLX.respackDir = new File(MCLX.gameDir,"resourcepacks");
+                    MCLX.datapackDir = new File(MCLX.gameDir,"datapacks");
+                    MCLX.smDir = new File(MCLX.gameDir,"simplemods");
                 }
+                MCLX.versionsDir=new File(MCLX.gameDir,"versions");
+                MCLX.updateVersions();
                 try {
                     if (!configFile.exists()) {
                         configFile.createNewFile();
@@ -298,6 +308,9 @@ public class Settings extends JDialog {
                     ioException.printStackTrace();
                 }
                 Settings.this.setVisible(false);
+                if(parent==null){
+                    System.exit(0);
+                }
             }
         });
 
