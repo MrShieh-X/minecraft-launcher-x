@@ -25,6 +25,7 @@ Historical version: <br/>
 
 ## Found BUGs
 - The dialogs may be displayed multiple times.
+- The asset files of some versions (1.7, etc.) could not be loaded.
 
 ## Precautions
 - (Fixed in 1.1) Please run the program in a directory with no spaces in the path. If you want to custom the working directories, please make sure that there are no spaces in the path. This will be fixed in a future version.
