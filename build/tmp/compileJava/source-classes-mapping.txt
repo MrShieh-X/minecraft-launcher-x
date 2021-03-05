@@ -1,9 +1,9 @@
 com/mrshiehx/mclx/LaunchException.java
  com.mrshiehx.mclx.LaunchException
+com/mrshiehx/mclx/UnExitableDialog.java
+ com.mrshiehx.mclx.UnExitableDialog
 com/mrshiehx/mclx/NumberLenghtLimitedDmt.java
  com.mrshiehx.mclx.NumberLenghtLimitedDmt
-com/mrshiehx/mclx/Strings.java
- com.mrshiehx.mclx.Strings
 com/mrshiehx/mclx/Settings.java
  com.mrshiehx.mclx.Settings
  com.mrshiehx.mclx.Settings$1
@@ -22,8 +22,15 @@ com/mrshiehx/mclx/MCLX.java
  com.mrshiehx.mclx.MCLX$3
  com.mrshiehx.mclx.MCLX$4
  com.mrshiehx.mclx.MCLX$5
+ com.mrshiehx.mclx.MCLX$5$1
+ com.mrshiehx.mclx.MCLX$5$1$1
+ com.mrshiehx.mclx.MCLX$5$1$1$1
+ com.mrshiehx.mclx.MCLX$5$1$1$1$1
+ com.mrshiehx.mclx.MCLX$5$1$1$1$2
  com.mrshiehx.mclx.MCLX$6
- com.mrshiehx.mclx.MCLX$6$1
- com.mrshiehx.mclx.MCLX$6$2
-com/mrshiehx/mclx/Test.java
- com.mrshiehx.mclx.Test
+ com.mrshiehx.mclx.MCLX$7
+ com.mrshiehx.mclx.MCLX$7$1
+ com.mrshiehx.mclx.MCLX$7$2
+ com.mrshiehx.mclx.MCLX$8
+com/mrshiehx/mclx/Strings.java
+ com.mrshiehx.mclx.Strings

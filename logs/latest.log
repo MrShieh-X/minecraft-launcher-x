@@ -1,0 +1,26 @@
+[12:25:33] [Render thread/ERROR]: Failed to verify authentication
+com.mojang.authlib.exceptions.AuthenticationUnavailableException: null
+	at com.mojang.authlib.yggdrasil.YggdrasilSocialInteractionsService.checkPrivileges(YggdrasilSocialInteractionsService.java:97) ~[authlib-2.1.28.jar:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilSocialInteractionsService.<init>(YggdrasilSocialInteractionsService.java:40) ~[authlib-2.1.28.jar:?]
+	at com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService.createSocialInteractionsService(YggdrasilAuthenticationService.java:152) ~[authlib-2.1.28.jar:?]
+	at djz.a(SourceFile:625) [1.16.4.jar:?]
+	at djz.<init>(SourceFile:409) [1.16.4.jar:?]
+	at net.minecraft.client.main.Main.main(SourceFile:177) [1.16.4.jar:?]
+[12:25:33] [Render thread/INFO]: Setting user: XPlayer
+[12:25:34] [Render thread/INFO]: Backend library: LWJGL version 3.2.2 build 10
+[12:25:39] [Render thread/INFO]: Narrator library for x64 successfully loaded
+[12:25:40] [Render thread/INFO]: Reloading ResourceManager: Default, respack.zip
+[12:25:44] [Realms Notification Availability checker #1/INFO]: Could not authorize you against Realms server: Invalid session id
+[12:25:56] [Render thread/INFO]: OpenAL initialized.
+[12:25:56] [Render thread/INFO]: Sound engine started
+[12:25:57] [Render thread/INFO]: Created: 1024x1024x4 minecraft:textures/atlas/blocks.png-atlas
+[12:25:57] [Render thread/INFO]: Created: 256x128x4 minecraft:textures/atlas/signs.png-atlas
+[12:25:57] [Render thread/INFO]: Created: 1024x512x4 minecraft:textures/atlas/banner_patterns.png-atlas
+[12:25:57] [Render thread/INFO]: Created: 1024x512x4 minecraft:textures/atlas/shield_patterns.png-atlas
+[12:25:57] [Render thread/INFO]: Created: 256x256x4 minecraft:textures/atlas/chest.png-atlas
+[12:25:57] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/beds.png-atlas
+[12:25:57] [Render thread/INFO]: Created: 512x256x4 minecraft:textures/atlas/shulker_boxes.png-atlas
+[12:26:01] [Render thread/INFO]: Created: 256x256x0 minecraft:textures/atlas/particles.png-atlas
+[12:26:01] [Render thread/INFO]: Created: 256x256x0 minecraft:textures/atlas/paintings.png-atlas
+[12:26:01] [Render thread/INFO]: Created: 256x128x0 minecraft:textures/atlas/mob_effects.png-atlas
+[12:26:11] [Render thread/INFO]: Stopping!
