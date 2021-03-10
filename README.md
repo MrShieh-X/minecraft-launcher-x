@@ -11,8 +11,9 @@ Anyone can take advices of this program to us.
 
 ## Version
 The latest version: <br/>
-<b>1.1 (Mar. 5, 2021)</b><br/>
+<b>1.2 (Mar. 10, 2021)</b><br/>
 Historical version: <br/>
+<b>1.2 (Mar. 10, 2021)</b><br/>
 <b>1.1 (Mar. 5, 2021)</b><br/>
 <b>1.0 (Feb. 16, 2021) (First version)</b><br/>
 
@@ -24,8 +25,8 @@ Historical version: <br/>
 - Simplified Chinese (China)
 
 ## Found BUGs
-- The dialogs may be displayed multiple times.
-- The asset files of some versions (1.7, etc.) could not be loaded.
+- (Fixed in 1.2) The dialogs may be displayed multiple times.
+- (Fixed in 1.2) The asset files of some versions (1.7, etc.) could not be loaded.
 
 ## Precautions
 - (Fixed in 1.1) Please run the program in a directory with no spaces in the path. If you want to custom the working directories, please make sure that there are no spaces in the path. This will be fixed in a future version.

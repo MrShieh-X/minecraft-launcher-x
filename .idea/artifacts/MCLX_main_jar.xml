@@ -2,6 +2,9 @@
   <artifact type="jar" name="MCLX.main:jar">
     <output-path>$PROJECT_DIR$/out/artifacts/MCLX_main_jar</output-path>
     <root id="archive" name="MCLX.main.jar">
+      <element id="directory" name="META-INF">
+        <element id="file-copy" path="$PROJECT_DIR$/META-INF/MANIFEST.MF" />
+      </element>
       <element id="module-output" name="MCLX.main" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.jetbrains/annotations/20.1.0/2fcd1f3225bca0c4a7bc931142076f8c1e80993f/annotations-20.1.0.jar" path-in-jar="/" />
       <element id="extracted-dir" path="$USER_HOME$/.gradle/caches/modules-2/files-2.1/org.json/json/20201115/f8e7a9953822c90e0701c3cd50764b5e9063f85c/json-20201115.jar" path-in-jar="/" />

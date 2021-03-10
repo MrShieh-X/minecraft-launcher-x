@@ -8,6 +8,9 @@ import org.json.JSONObject;
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.awt.*;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.io.*;
 import java.lang.management.ManagementFactory;
@@ -38,16 +41,24 @@ public class MCLX {
     public static String configContent = "";
     public static String javaPath = "";
 
-    public static String MCLX_VERSION = "1.1";
+    public static String MCLX_VERSION = "1.2";
 
     public static ImageIcon icon = new ImageIcon(MCLX.class.getResource("/icon.png"));
+
+    private static JSONObject enUSText;
+    private static JSONObject zhCNText;
+
+    public static final int LAUNCH_MODE_LAUNCH = 0;
+    public static final int LAUNCH_MODE_GET_COMMAND = 1;
+
+    static String language;
 
     public static void main(String[] args) {
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignore) {
         }
-        JFrame frame = new JFrame(Strings.APPLICATION_NAME);
+        JFrame frame = new JFrame(getString("APPLICATION_NAME"));
         frame.setIconImage(icon.getImage());
         frame.setBounds(500, 250, 420, 350);
         Toolkit kit = Toolkit.getDefaultToolkit();
@@ -62,29 +73,31 @@ public class MCLX {
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
 
         menuBar = new JMenuBar();
-        startGame = new JButton(Strings.BUTTON_START_NAME);
+        startGame = new JButton(getString("BUTTON_START_NAME"));
         versionChooser = new JComboBox();
         log = new JTextArea();
 
-        JMenu menu = new JMenu(Strings.MENU_NAME);
+        JMenu menu = new JMenu(getString("MENU_NAME"));
 
-        JMenuItem settingsMenu = new JMenuItem(Strings.MENU_SETTINGS_NAME);
-        JMenuItem installNewVersionMenu = new JMenuItem(Strings.MENU_INSTALL_NEW_VERSION);
-        JMenuItem aboutMenu = new JMenuItem(Strings.MENU_ABOUT_NAME);
-        JMenuItem exitMenu = new JMenuItem(Strings.DIALOG_BUTTON_EXIT_TEXT);
-        JMenuItem killMc = new JMenuItem(Strings.MENU_KILL_MINECRAFT);
+        JMenuItem settingsMenu = new JMenuItem(getString("MENU_SETTINGS_NAME"));
+        JMenuItem copyCommand = new JMenuItem(getString("MENU_COPY_COMMAND"));
+        JMenuItem installNewVersionMenu = new JMenuItem(getString("MENU_INSTALL_NEW_VERSION"));
+        JMenuItem aboutMenu = new JMenuItem(getString("MENU_ABOUT_NAME"));
+        JMenuItem exitMenu = new JMenuItem(getString("DIALOG_BUTTON_EXIT_TEXT"));
+        JMenuItem killMc = new JMenuItem(getString("MENU_KILL_MINECRAFT"));
 
         settingsMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                Settings settings = new Settings(frame, true);
-                settings.setVisible(true);
+                //Settings settings = new Settings(frame, true);
+                //settings.setVisible(true);
+                Settings.showIt(frame, true, true);
             }
         });
         aboutMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(frame, Strings.DIALOG_ABOUT_DESCRIPTION, Strings.MENU_ABOUT_NAME, JOptionPane.INFORMATION_MESSAGE, new ImageIcon(icon.getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
+                JOptionPane.showMessageDialog(frame, getString("DIALOG_ABOUT_DESCRIPTION"), getString("MENU_ABOUT_NAME"), JOptionPane.INFORMATION_MESSAGE, new ImageIcon(icon.getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
             }
         });
         exitMenu.addActionListener(new ActionListener() {
@@ -121,7 +134,7 @@ public class MCLX {
                                 downloadFile("https://launchermeta.mojang.com/mc/game/version_manifest.json", versionsFile);
                             } catch (IOException exception) {
                                 exception.printStackTrace();
-                                JOptionPane.showMessageDialog(frame, Strings.MESSAGE_FAILED_TO_DOWNLOAD_VERSIONS_FILE, Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(frame, getString("MESSAGE_FAILED_TO_DOWNLOAD_VERSIONS_FILE"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                                 return;
                             }
                             try {
@@ -142,8 +155,8 @@ public class MCLX {
 
                                     Object inputContent = JOptionPane.showInputDialog(
                                             frame,
-                                            Strings.MESSAGE_CHOOSE_A_VERSION,
-                                            Strings.MENU_INSTALL_NEW_VERSION,
+                                            getString("MESSAGE_CHOOSE_A_VERSION"),
+                                            getString("MENU_INSTALL_NEW_VERSION"),
                                             JOptionPane.PLAIN_MESSAGE,
                                             null,
                                             selectionValues,
@@ -153,7 +166,7 @@ public class MCLX {
                                         //System.out.println(urls.get(ids.indexOf(inputContent)));
                                         String jsonFileURL = urls.get(ids.indexOf(inputContent));
 
-                                        String name = showInputNameDialog(frame, (String) inputContent, Strings.MESSAGE_INSTALL_INPUT_NAME);
+                                        String name = showInputNameDialog(frame, (String) inputContent, getString("MESSAGE_INSTALL_INPUT_NAME"));
 
                                         if (!isEmpty(name)) {
                                             File versionDir = new File(versionsDir, name);
@@ -172,7 +185,7 @@ public class MCLX {
                                                     if (clientJo != null) {
                                                         String url = clientJo.optString("url");
                                                         if (!isEmpty(url)) {
-                                                            UnExitableDialog dialog = new UnExitableDialog(frame, Strings.MENU_INSTALL_NEW_VERSION, true);
+                                                            UnExitableDialog dialog = new UnExitableDialog(frame, getString("MENU_INSTALL_NEW_VERSION"), true);
                                                             dialog.setSize(250, 160);
                                                             dialog.setResizable(false);
                                                             dialog.setLayout(null);
@@ -211,11 +224,11 @@ public class MCLX {
                                                                         @Override
                                                                         public void run() {
                                                                             try {
-                                                                                addLog(textArea, Strings.MESSAGE_INSTALL_DOWNLOADING_JAR_FILE);
+                                                                                addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOADING_JAR_FILE"));
                                                                                 downloadFile(url, jarFile, progressBar);
-                                                                                addLog(textArea, Strings.MESSAGE_INSTALL_DOWNLOADED_JAR_FILE);
+                                                                                addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOADED_JAR_FILE"));
                                                                                 progressBar.setValue(0);
-                                                                                addLog(textArea, Strings.MESSAGE_INSTALL_DOWNLOADING_ASSETS);
+                                                                                addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOADING_ASSETS"));
                                                                                 //downloadFile(url, jarFile, progressBar);
                                                                                 File librariesDir = new File(gameDir, "libraries");
                                                                                 File assetsDir = new File(gameDir, "assets");
@@ -252,9 +265,21 @@ public class MCLX {
                                                                                                     String hash = object.optString("hash");
                                                                                                     try {
                                                                                                         if (!isEmpty(hash)) {
-                                                                                                            File dir = new File(objectsDir, hash.substring(0, 2));
-                                                                                                            dir.mkdirs();
-                                                                                                            File file = new File(dir, hash);
+                                                                                                            File file;
+                                                                                                            if (!assetsIndex.equals("legacy")) {
+                                                                                                                File dir = new File(objectsDir, hash.substring(0, 2));
+                                                                                                                dir.mkdirs();
+                                                                                                                file = new File(dir, hash);
+                                                                                                            } else {
+                                                                                                                file = new File(assetsDir, "virtual" + getFileSeparator(assetsDir.getAbsolutePath()) + "legacy" + getFileSeparator(assetsDir.getAbsolutePath()) + nameList.get(i));
+                                                                                                                file.getParentFile().mkdirs();
+                                                                                                            }
+                                                                                                            /*File dir = new File(!assetsIndex.equals("legacy")?objectsDir:new File(assetsDir,"virtual"+getFileSeparator(assetsDir.getAbsolutePath())+"legacy"), !assetsIndex.equals("legacy")?hash.substring(0, 2):nameList.get(i));
+
+                                                                                                            File file = !assetsIndex.equals("legacy")?new File(dir, hash):new File();
+                                                                                                            file.getParentFile().mkdirs();*/
+
+
                                                                                                             if (!file.exists()) {
                                                                                                                 file.createNewFile();
                                                                                                                 downloadFile("https://resources.download.minecraft.net/" + hash.substring(0, 2) + "/" + hash, file, progressBar);
@@ -262,26 +287,26 @@ public class MCLX {
                                                                                                         }
                                                                                                     } catch (Exception e) {
                                                                                                         e.printStackTrace();
-                                                                                                        addLog(textArea, String.format(Strings.MESSAGE_FAILED_DOWNLOAD_FILE, hash));
+                                                                                                        addLog(textArea, String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), hash));
                                                                                                     }
                                                                                                 }
                                                                                             }
-                                                                                            addLog(textArea, Strings.MESSAGE_INSTALL_DOWNLOADED_ASSETS);
+                                                                                            addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOADED_ASSETS"));
                                                                                         } catch (Exception e) {
                                                                                             e.printStackTrace();
-                                                                                            addLog(textArea, String.format(Strings.MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS, e));
+                                                                                            addLog(textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"), e));
                                                                                         }
                                                                                     } else {
-                                                                                        addLog(textArea, String.format(Strings.MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS, Strings.MESSAGE_EXCEPTION_DETAIL_NOT_FOUND_URL));
-                                                                                        //textArea.setText(textArea.getText()+String.format(Strings.MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS,Strings.MESSAGE_EXCEPTION_DETAIL_NOT_FOUND_URL)+"\n");
+                                                                                        addLog(textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"), getString("MESSAGE_EXCEPTION_DETAIL_NOT_FOUND_URL")));
+                                                                                        //textArea.setText(textArea.getText()+String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"),getString("MESSAGE_EXCEPTION_DETAIL_NOT_FOUND_URL"))+"\n");
                                                                                     }
                                                                                 } else {
-                                                                                    //textArea.setText(textArea.getText()+Strings.MESSAGE_INSTALL_DOWNLOAD_ASSETS_NO_INDEX+"\n");
-                                                                                    addLog(textArea, Strings.MESSAGE_INSTALL_DOWNLOAD_ASSETS_NO_INDEX);
+                                                                                    //textArea.setText(textArea.getText()+getString("MESSAGE_INSTALL_DOWNLOAD_ASSETS_NO_INDEX""))+"\n");
+                                                                                    addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOAD_ASSETS_NO_INDEX"));
                                                                                 }
 
 
-                                                                                addLog(textArea, Strings.MESSAGE_INSTALL_DOWNLOADING_LIBRARIES);
+                                                                                addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES"));
                                                                                 try {
                                                                                     JSONArray librariesJa = headVersionFile.optJSONArray("libraries");
                                                                                     if (librariesJa != null) {
@@ -297,14 +322,16 @@ public class MCLX {
                                                                                                         if (!isEmpty(path) && !isEmpty(url)) {
                                                                                                             try {
                                                                                                                 File file = new File(librariesDir, path);
-                                                                                                                if(!file.exists()) {
-                                                                                                                    file.getParentFile().mkdirs();
+                                                                                                                file.getParentFile().mkdirs();
+                                                                                                                if (!file.exists()) {
                                                                                                                     file.createNewFile();
+                                                                                                                }
+                                                                                                                if (file.length() == 0) {
                                                                                                                     downloadFile(url, file, progressBar);
                                                                                                                 }
                                                                                                             } catch (Exception e) {
                                                                                                                 e.printStackTrace();
-                                                                                                                addLog(textArea, String.format(Strings.MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARY, url, e));
+                                                                                                                addLog(textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARY"), url, e));
                                                                                                             }
                                                                                                         }
                                                                                                     }
@@ -326,13 +353,13 @@ public class MCLX {
                                                                                                                 if (!isEmpty(url)) {
                                                                                                                     File nativeFile = new File(tempNatives, url.substring(url.lastIndexOf("/") + 1));
                                                                                                                     //if(!nativeFile.exists()) {
-                                                                                                                        nativeFile.createNewFile();
-                                                                                                                        downloadFile(url, nativeFile, progressBar);
+                                                                                                                    nativeFile.createNewFile();
+                                                                                                                    downloadFile(url, nativeFile, progressBar);
                                                                                                                     //}
                                                                                                                 }
                                                                                                             } catch (Exception e) {
                                                                                                                 e.printStackTrace();
-                                                                                                                addLog(textArea, String.format(Strings.MESSAGE_FAILED_DOWNLOAD_FILE, url));
+                                                                                                                addLog(textArea, String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), url));
                                                                                                             }
                                                                                                         }
                                                                                                     }
@@ -340,19 +367,19 @@ public class MCLX {
                                                                                                 }
                                                                                             }
                                                                                         }
-                                                                                        addLog(textArea, Strings.MESSAGE_INSTALL_DOWNLOADED_LIBRARIES);
+                                                                                        addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOADED_LIBRARIES"));
                                                                                     } else {
-                                                                                        addLog(textArea, Strings.MESSAGE_INSTALL_LIBRARIES_LIST_EMPTY);
+                                                                                        addLog(textArea, getString("MESSAGE_INSTALL_LIBRARIES_LIST_EMPTY"));
                                                                                     }
                                                                                 } catch (Exception e) {
                                                                                     e.printStackTrace();
-                                                                                    addLog(textArea, String.format(Strings.MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARIES, e));
+                                                                                    addLog(textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARIES"), e));
                                                                                 }
 
 
                                                                                 File[] natives = tempNatives.listFiles((dir, name1) -> name1.endsWith(".jar"));
-                                                                                if(natives!=null&&natives.length!=0) {
-                                                                                    addLog(textArea, Strings.MESSAGE_INSTALL_DECOMPRESSING_LIBRARIES);
+                                                                                if (natives != null && natives.length != 0) {
+                                                                                    addLog(textArea, getString("MESSAGE_INSTALL_DECOMPRESSING_LIBRARIES"));
                                                                                     for (File file : natives) {
                                                                                         try {
                                                                                             File dir = new File(tempNatives, file.getName().substring(0, file.getName().lastIndexOf(".")));
@@ -360,7 +387,7 @@ public class MCLX {
                                                                                             unZip(file, dir, progressBar);
                                                                                         } catch (Exception e) {
                                                                                             e.printStackTrace();
-                                                                                            addLog(textArea, String.format(Strings.MESSAGE_FAILED_TO_DECOMPRESS_FILE, file.getAbsolutePath(), e));
+                                                                                            addLog(textArea, String.format(getString("MESSAGE_FAILED_TO_DECOMPRESS_FILE"), file.getAbsolutePath(), e));
                                                                                         }
                                                                                     }
                                                                                 }
@@ -399,21 +426,21 @@ public class MCLX {
                                                                                     }
                                                                                 }*/
 
-                                                                                List<File>libFiles=new ArrayList<>();
-                                                                                String houzhui=".so";
+                                                                                List<File> libFiles = new ArrayList<>();
+                                                                                String houzhui = ".so";
 
                                                                                 String osName = System.getProperty("os.name");
 
                                                                                 if (osName.toLowerCase().startsWith("windows")) {
-                                                                                    houzhui=".dll";
+                                                                                    houzhui = ".dll";
                                                                                 } else if (osName.toLowerCase().startsWith("mac")) {
-                                                                                    houzhui=".dylib";
+                                                                                    houzhui = ".dylib";
                                                                                 }
 
                                                                                 File[] var4 = tempNatives.listFiles(new FilenameFilter() {
                                                                                     @Override
                                                                                     public boolean accept(File dir, String name) {
-                                                                                        return dir.exists()&&dir.isDirectory();
+                                                                                        return dir.exists() && dir.isDirectory();
                                                                                     }
                                                                                 });
 
@@ -423,30 +450,30 @@ public class MCLX {
                                                                                         File[] files = file.listFiles(new FilenameFilter() {
                                                                                             @Override
                                                                                             public boolean accept(File dir, String name) {
-                                                                                                return name.endsWith(finalHouzhui);
+                                                                                                return name.toLowerCase().endsWith(finalHouzhui);
                                                                                             }
                                                                                         });
                                                                                         libFiles.addAll(Arrays.asList(files));
                                                                                     }
                                                                                 }
 
-                                                                                for(File file:libFiles){
-                                                                                    File to=new File(nativesDir,file.getName());
-                                                                                    try{
-                                                                                        copyFile(file,to);
-                                                                                    }catch (IOException e){
+                                                                                for (File file : libFiles) {
+                                                                                    File to = new File(nativesDir, file.getName());
+                                                                                    try {
+                                                                                        copyFile(file, to);
+                                                                                    } catch (IOException e) {
                                                                                         e.printStackTrace();
-                                                                                        addLog(textArea,String.format(Strings.MESSAGE_FAILED_TO_COPY_FILE,file.getAbsolutePath(),to.getAbsolutePath(),e));
+                                                                                        addLog(textArea, String.format(getString("MESSAGE_FAILED_TO_COPY_FILE"), file.getAbsolutePath(), to.getAbsolutePath(), e));
                                                                                     }
                                                                                 }
 
                                                                                 deleteDirectory(tempNatives);
-                                                                                addLog(textArea, Strings.MESSAGE_INSTALL_DECOMPRESSED_LIBRARIES);
-                                                                                addLog(textArea, Strings.MESSAGE_INSTALLED_NEW_VERSION);
+                                                                                addLog(textArea, getString("MESSAGE_INSTALL_DECOMPRESSED_LIBRARIES"));
+                                                                                addLog(textArea, getString("MESSAGE_INSTALLED_NEW_VERSION"));
                                                                             } catch (Exception ex) {
                                                                                 ex.printStackTrace();
-                                                                                addLog(textArea,String.format(Strings.MESSAGE_FAILED_TO_INSTALL_NEW_VERSION, e));
-                                                                                JOptionPane.showMessageDialog(frame, String.format(Strings.MESSAGE_FAILED_TO_INSTALL_NEW_VERSION, e), Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                                                                                addLog(textArea, String.format(getString("MESSAGE_FAILED_TO_INSTALL_NEW_VERSION, e")));
+                                                                                JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_FAILED_TO_INSTALL_NEW_VERSION"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                                                                             }
                                                                             progressBar.setValue(progressBar.getMaximum());
                                                                             dialog.setExitable(true);
@@ -460,18 +487,18 @@ public class MCLX {
 
 
                                                         } else {
-                                                            JOptionPane.showMessageDialog(frame, String.format(Strings.MESSAGE_INSTALL_JAR_FILE_DOWNLOAD_URL_EMPTY, e), Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                                                            JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_INSTALL_JAR_FILE_DOWNLOAD_URL_EMPTY"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                                                         }
                                                     } else {
-                                                        JOptionPane.showMessageDialog(frame, String.format(Strings.MESSAGE_INSTALL_NOT_FOUND_JAR_FILE_DOWNLOAD_INFO, e), Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                                                        JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_INSTALL_NOT_FOUND_JAR_FILE_DOWNLOAD_INFO"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                                                     }
                                                 } else {
-                                                    JOptionPane.showMessageDialog(frame, String.format(Strings.MESSAGE_INSTALL_NOT_FOUND_JAR_FILE_DOWNLOAD_INFO, e), Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                                                    JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_INSTALL_NOT_FOUND_JAR_FILE_DOWNLOAD_INFO"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                                                 }
 
                                             } catch (IOException e) {
                                                 e.printStackTrace();
-                                                JOptionPane.showMessageDialog(frame, String.format(Strings.MESSAGE_FAILED_TO_CONTROL_VERSION_JSON_FILE, e), Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                                                JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_FAILED_TO_CONTROL_VERSION_JSON_FILE"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                                             }
                                             updateVersions();
                                         }
@@ -479,14 +506,14 @@ public class MCLX {
 
                                     }
                                 } else {
-                                    JOptionPane.showMessageDialog(frame, String.format(Strings.MESSAGE_VERSIONS_LIST_IS_EMPTY, e), Strings.DIALOG_TITLE_NOTICE, JOptionPane.WARNING_MESSAGE);
+                                    JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_VERSIONS_LIST_IS_EMPTY"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.WARNING_MESSAGE);
                                 }
                             } catch (IOException | JSONException e) {
                                 e.printStackTrace();
-                                JOptionPane.showMessageDialog(frame, String.format(Strings.MESSAGE_FAILED_TO_PARSE_VERSIONS_FILE, e), Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                                JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_FAILED_TO_PARSE_VERSIONS_FILE"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                             }
                         } else {
-                            JOptionPane.showMessageDialog(frame, Strings.MESSAGE_FAILED_TO_CONNECT_TO_LAUNCHERMETA, Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(frame, getString("MESSAGE_FAILED_TO_CONNECT_TO_LAUNCHERMETA"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }).start();
@@ -500,22 +527,75 @@ public class MCLX {
                 } else {
                     killMc.setEnabled(false);
                 }
+
+                copyCommand.setEnabled(versionChooser.getModel().getSelectedItem() != null);
             }
 
             public void mousePressed(MouseEvent e) {
+
             }
 
             public void mouseReleased(MouseEvent e) {
+
             }
 
             public void mouseEntered(MouseEvent e) {
+
             }
 
             public void mouseExited(MouseEvent e) {
+
+            }
+        });
+
+        copyCommand.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    configContent = readFileContent(configFile);
+                } catch (IOException exception) {
+                    exception.printStackTrace();
+                    JOptionPane.showMessageDialog(frame, exception, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+                }
+                JSONObject jsonObject = new JSONObject(configContent);
+                if (!configFile.exists() || null == configContent || null == javaPath || (null == javaPath ? true : !new File(javaPath).exists())) {
+                    Object[] options = new Object[]{getString("MENU_SETTINGS_NAME"), getString("DIALOG_BUTTON_CANCEL_TEXT")};
+                    int optionSelected = JOptionPane.showOptionDialog(
+                            frame,
+                            getString("MESSAGE_NOT_FOUND_JAVA"),
+                            getString("DIALOG_TITLE_NOTICE"),
+                            JOptionPane.YES_NO_OPTION,
+                            JOptionPane.ERROR_MESSAGE,
+                            null,
+                            options,
+                            options[0]
+                    );
+
+                    if (optionSelected >= 0) {
+                        if (optionSelected == 0) {
+                            //Settings settings = new Settings(frame, true);
+                            //settings.setVisible(true);
+                            Settings.showIt(frame, true, true);
+                        }
+                    }
+                } else {
+                    String selected = (String) versionChooser.getSelectedItem();
+                    File versionsFolder = addTo(gameDir, "versions");
+                    File versionFolder = addTo(versionsFolder, selected);
+                    File versionJarFile = addTo(versionFolder, selected + ".jar");
+                    File versionJsonFile = addTo(versionFolder, selected + ".json");
+                    try {
+                        copyText((String) launchMinecraft(versionJarFile, versionJsonFile, gameDir, assetsDir, respackDir, datapackDir, jsonObject.optBoolean("ls"), smDir, jsonObject.optString("pn", "XPlayer"), jsonObject.optString("jp"), jsonObject.optInt("mm", 1024), 128, jsonObject.optInt("ww", 854), jsonObject.optInt("wh", 480), jsonObject.optBoolean("fs"), jsonObject.optString("at", "0"), jsonObject.optString("uu", "0"), LAUNCH_MODE_GET_COMMAND));
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(frame, ex, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+                    }
+                }
             }
         });
 
         menu.add(killMc);
+        menu.add(copyCommand);
         menu.add(installNewVersionMenu);
         menu.add(settingsMenu);
         menu.add(aboutMenu);
@@ -547,25 +627,31 @@ public class MCLX {
         if (configFile.exists()) {
             try {
                 configContent = readFileContent(configFile);
-                JSONObject jsonObject = new JSONObject(configContent);
+                JSONObject jsonObject = new JSONObject();
+                try {
+                    jsonObject = new JSONObject(configContent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
                 javaPath = jsonObject.optString("jp");
                 if (jsonObject.optBoolean("cw")) {
 
                     gameDir = new File(!isEmpty(jsonObject.optString("gd")) ? jsonObject.optString("gd") : ".minecraft");
-                    assetsDir = new File(!isEmpty(jsonObject.optString("ad")) ? jsonObject.optString("ad") : ".minecraft/assets");
-                    respackDir = new File(!isEmpty(jsonObject.optString("rd")) ? jsonObject.optString("rd") : ".minecraft/resourcepacks");
-                    datapackDir = new File(!isEmpty(jsonObject.optString("dd")) ? jsonObject.optString("dd") : ".minecraft/datapacks");
-                    smDir = new File(!isEmpty(jsonObject.optString("sd")) ? jsonObject.optString("sd") : ".minecraft/simplemods");
+                    assetsDir = !isEmpty(jsonObject.optString("ad")) ? new File(jsonObject.optString("ad")) : new File(gameDir, "assets");
+                    respackDir = !isEmpty(jsonObject.optString("rd")) ? new File(jsonObject.optString("rd")) : new File(gameDir, "resourcepacks");
+                    datapackDir = !isEmpty(jsonObject.optString("dd")) ? new File(jsonObject.optString("dd")) : new File(gameDir, "datapacks");
+                    smDir = !isEmpty(jsonObject.optString("sd")) ? new File(jsonObject.optString("sd")) : new File(gameDir, "simplemods");
+
                     /*File[] filesFromFile = new File[]{gameDirFromFile, assetDirFromFile, resPackDirFromFile, dataPackDirFromFile, smDirFromFile};
                     for (int i = 0; i < filesFromFile.length; i++) {
                         if (!filesFromFile[i].exists()) {
 
-                            Object[] options = new Object[]{Strings.MENU_SETTINGS_NAME, Strings.DIALOG_BUTTON_CANCEL_TEXT};
+                            Object[] options = new Object[]{getString("MENU_SETTINGS_NAME"), getString("DIALOG_BUTTON_CANCEL_TEXT")};
 
                             int optionSelected = JOptionPane.showOptionDialog(
                                     frame,
-                                    String.format(Strings.DIALOG_TARGET_FILE_NOT_EXISTS_TEXT, filesFromFile[i].getAbsolutePath()),
-                                    Strings.DIALOG_TITLE_NOTICE,
+                                    String.format(getString("DIALOG_TARGET_FILE_NOT_EXISTS_TEXT"), filesFromFile[i].getAbsolutePath()),
+                                    getString("DIALOG_TITLE_NOTICE"),
                                     JOptionPane.YES_NO_OPTION,
                                     JOptionPane.WARNING_MESSAGE,
                                     null,
@@ -575,8 +661,9 @@ public class MCLX {
 
                             if (optionSelected >= 0) {
                                 if (optionSelected == 0) {
-                                    Settings settings = new Settings(null, true);
-                                    settings.setVisible(true);
+                                //Settings settings = new Settings(frame, true);
+                                //settings.setVisible(true);
+                                Settings.showIt(frame, true);
                                 }
                             }
 
@@ -623,20 +710,20 @@ public class MCLX {
         startGame.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if(versionChooser.getModel().getSelectedItem()!=null) {
+                if (versionChooser.getModel().getSelectedItem() != null) {
                     try {
                         configContent = readFileContent(configFile);
                     } catch (IOException exception) {
                         exception.printStackTrace();
-                        JOptionPane.showMessageDialog(frame, exception, Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                        JOptionPane.showMessageDialog(frame, exception, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                     }
                     JSONObject jsonObject = new JSONObject(configContent);
-                    if (!configFile.exists() || configContent == null || javaPath == null || (javaPath == null ? true : !new File(javaPath).exists())) {
-                        Object[] options = new Object[]{Strings.MENU_SETTINGS_NAME, Strings.DIALOG_BUTTON_CANCEL_TEXT};
+                    if (!configFile.exists() || null == configContent || null == javaPath || (null == javaPath ? true : !new File(javaPath).exists())) {
+                        Object[] options = new Object[]{getString("MENU_SETTINGS_NAME"), getString("DIALOG_BUTTON_CANCEL_TEXT")};
                         int optionSelected = JOptionPane.showOptionDialog(
                                 frame,
-                                Strings.MESSAGE_NOT_FOUND_JAVA,
-                                Strings.DIALOG_TITLE_NOTICE,
+                                getString("MESSAGE_NOT_FOUND_JAVA"),
+                                getString("DIALOG_TITLE_NOTICE"),
                                 JOptionPane.YES_NO_OPTION,
                                 JOptionPane.ERROR_MESSAGE,
                                 null,
@@ -646,8 +733,9 @@ public class MCLX {
 
                         if (optionSelected >= 0) {
                             if (optionSelected == 0) {
-                                Settings settings = new Settings(frame, true);
-                                settings.setVisible(true);
+                                //Settings settings = new Settings(frame, true);
+                                //settings.setVisible(true);
+                                Settings.showIt(frame, true, true);
                             }
                         }
                     } else {
@@ -657,7 +745,7 @@ public class MCLX {
                         File versionJarFile = addTo(versionFolder, selected + ".jar");
                         File versionJsonFile = addTo(versionFolder, selected + ".json");
                         try {
-                            runningMc = launchMinecraft(versionJarFile, versionJsonFile, gameDir, assetsDir, respackDir, datapackDir, jsonObject.optBoolean("ls"), smDir, jsonObject.optString("pn", "XPlayer"), jsonObject.optString("jp"), jsonObject.optInt("mm", 1024), 128, jsonObject.optInt("ww", 854), jsonObject.optInt("wh", 480), jsonObject.optBoolean("fs"), "0");
+                            runningMc = (Process) launchMinecraft(versionJarFile, versionJsonFile, gameDir, assetsDir, respackDir, datapackDir, jsonObject.optBoolean("ls"), smDir, jsonObject.optString("pn", "XPlayer"), jsonObject.optString("jp"), jsonObject.optInt("mm", 1024), 128, jsonObject.optInt("ww", 854), jsonObject.optInt("wh", 480), jsonObject.optBoolean("fs"), jsonObject.optString("at", "0"), jsonObject.optString("uu", "0"), LAUNCH_MODE_LAUNCH);
 
                             new Thread(new Runnable() {
                                 @Override
@@ -682,7 +770,7 @@ public class MCLX {
                                 public void run() {
                                     try {
                                         runningMc.waitFor();
-                                        log.setText(log.getText() + Strings.MESSAGE_FINISHED_GAME);
+                                        log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
                                     } catch (InterruptedException interruptedException) {
                                         interruptedException.printStackTrace();
                                     }
@@ -690,7 +778,7 @@ public class MCLX {
                             }).start();
                         } catch (Exception ex) {
                             ex.printStackTrace();
-                            JOptionPane.showMessageDialog(frame, ex, Strings.DIALOG_TITLE_NOTICE, JOptionPane.ERROR_MESSAGE);
+                            JOptionPane.showMessageDialog(frame, ex, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                         }
                     }
                 }
@@ -698,12 +786,12 @@ public class MCLX {
         });
 
         /*if (!gameDir.exists()) {
-            Object[] options = new Object[]{Strings.MENU_SETTINGS_NAME, Strings.DIALOG_BUTTON_EXIT_TEXT};
+            Object[] options = new Object[]{getString("MENU_SETTINGS_NAME"), getString("DIALOG_BUTTON_EXIT_TEXT")};
 
             int optionSelected = JOptionPane.showOptionDialog(
                     frame,
-                    Strings.DIALOG_NO_MINECRAFT_DIR_TEXT,
-                    Strings.DIALOG_TITLE_NOTICE,
+                    getString("DIALOG_NO_MINECRAFT_DIR_TEXT"),
+                    getString("DIALOG_TITLE_NOTICE"),
                     JOptionPane.YES_NO_OPTION,
                     JOptionPane.ERROR_MESSAGE,
                     null,
@@ -713,8 +801,9 @@ public class MCLX {
 
             if (optionSelected >= 0) {
                 if (optionSelected == 0) {
-                    Settings settings = new Settings(null, true);
-                    settings.setVisible(true);
+                                //Settings settings = new Settings(frame, true);
+                                //settings.setVisible(true);
+                                Settings.showIt(frame, true);
                 } else if (optionSelected == 1) {
                     System.exit(0);
                 }
@@ -771,10 +860,10 @@ public class MCLX {
     }
 
     public static boolean isWindows() {
-        return /*File.separator.equals("\\")||File.separatorChar=='\\'||*//*AccessController.doPrivileged(OSInfo.getOSTypeAction()) == OSInfo.OSType.WINDOWS*/System.getProperty("os.name").startsWith("Windows") || System.getProperty("os.name").startsWith("windows");
+        return File.separator.equals("\\") || File.separatorChar == '\\' ||/*AccessController.doPrivileged(OSInfo.getOSTypeAction()) == OSInfo.OSType.WINDOWS*/System.getProperty("os.name").toLowerCase().startsWith("windows");
     }
 
-    public static Process launchMinecraft(
+    public static Object launchMinecraft(
             File minecraftJarFile,
             File minecraftVersionJsonFile,
             File gameDir,
@@ -790,34 +879,36 @@ public class MCLX {
             int width,
             int height,
             boolean fullscreen,
-            String accessToken) throws
+            String accessToken,
+            String uuid,
+            int mode) throws
             LaunchException,
             IOException,
             JSONException {
-        log.setText(null);
+        if (mode == LAUNCH_MODE_LAUNCH) log.setText(null);
         if (!new File(javaPath).exists()) {
-            throw new LaunchException(Strings.EXCEPTION_VERSION_JSON_NOT_FOUND);
+            throw new LaunchException(getString("EXCEPTION_VERSION_JSON_NOT_FOUND"));
         }
-        if (gameDir == null) {
+        if (null == gameDir) {
             gameDir = new File(".minecraft");
         }
-        if (assetsDir == null) {
-            assetsDir = new File(".minecraft/assets");
+        if (null == assetsDir) {
+            assetsDir = new File(gameDir, "assets");
         }
-        if (resourcePacksDir == null) {
-            resourcePacksDir = new File(".minecraft/resourcepacks");
+        if (null == resourcePacksDir) {
+            resourcePacksDir = new File(gameDir, "resourcepacks");
         }
-        if (dataPacksDir == null) {
-            dataPacksDir = new File(".minecraft/datapacks");
+        if (null == dataPacksDir) {
+            dataPacksDir = new File(gameDir, "datapacks");
         }
-        if (SMDir == null) {
-            SMDir = new File(".minecraft/simplemods");
+        if (null == SMDir) {
+            SMDir = new File(gameDir, "simplemods");
         }
         if (!gameDir.exists()) {
-            throw new LaunchException(Strings.MESSAGE_NOT_FOUND_GAME_DIR);
+            throw new LaunchException(getString("MESSAGE_NOT_FOUND_GAME_DIR"));
         }
         if (maxMemory == 0) {
-            throw new LaunchException(Strings.EXCEPTION_MAX_MEMORY_IS_ZERO);
+            throw new LaunchException(getString("EXCEPTION_MAX_MEMORY_IS_ZERO"));
         }
 
         if (!assetsDir.exists()) {
@@ -840,19 +931,19 @@ public class MCLX {
         long physicalTotal = osmxb.getTotalPhysicalMemorySize() / 1048576;
 
         if (maxMemory > physicalTotal) {
-            throw new LaunchException(Strings.EXCEPTION_MAX_MEMORY_TOO_BIG);
+            throw new LaunchException(getString("EXCEPTION_MAX_MEMORY_TOO_BIG"));
         }
 
         String contentOfJsonFile;
         if (!minecraftVersionJsonFile.exists()) {
-            throw new LaunchException(Strings.EXCEPTION_VERSION_JSON_NOT_FOUND);
+            throw new LaunchException(getString("EXCEPTION_VERSION_JSON_NOT_FOUND"));
         } else {
             contentOfJsonFile = readFileContent(minecraftVersionJsonFile);
         }
         if (!minecraftJarFile.exists()) {
-            throw new LaunchException(Strings.EXCEPTION_VERSION_NOT_FOUND);
+            throw new LaunchException(getString("EXCEPTION_VERSION_NOT_FOUND"));
         }
-        log.setText(Strings.MESSAGE_STARTING_GAME + "\n");
+        if (mode == LAUNCH_MODE_LAUNCH) log.setText(getString("MESSAGE_STARTING_GAME") + "\n");
         JSONObject headJsonObject = new JSONObject(contentOfJsonFile);
         JSONArray libraries = headJsonObject.optJSONArray("libraries");
         File librariesFile = addTo(gameDir, "libraries");
@@ -864,95 +955,16 @@ public class MCLX {
             String[] nameSplit = name.split(":");
             String libraryFileName = nameSplit[1] + "-" + nameSplit[2] + ".jar";
             String libraryFileAndDirectoryName = nameSplit[0].replace(".", "/") + "/" + nameSplit[1] + "/" + nameSplit[2];
-            File libraryFile = addTo(addTo(librariesFile, libraryFileAndDirectoryName), libraryFileName);
-
-            /*String parent=libraryFile.getParentFile().getParent();
-
-            boolean chongTu=false;
-
-            for(String string:librariesPaths){
-                if(string.startsWith(parent)){
-                    chongTu=true;
-                    break;
-                }
-            }
-
-
-            int libraryFileParLf = libraryFile.getParentFile().getParentFile().listFiles().length;
-
-            if(name.contains("lwjgl")) {
-                if (libraryFileParLf == 1) {
-                    if (libraryFile.exists() && !librariesPaths.contains(libraryFile.getAbsolutePath()) && !chongTu) {
-                        librariesPaths.add(libraryFile.getAbsolutePath());
-
-                    }
-                } else {
-                    File[] files = libraryFile.getParentFile().getParentFile().listFiles(new FilenameFilter() {
-                        @Override
-                        public boolean accept(File dir, String name) {
-                            return name.startsWith("0") ||
-                                    name.startsWith("1") ||
-                                    name.startsWith("2") ||
-                                    name.startsWith("3") ||
-                                    name.startsWith("4") ||
-                                    name.startsWith("5") ||
-                                    name.startsWith("6") ||
-                                    name.startsWith("7") ||
-                                    name.startsWith("8") ||
-                                    name.startsWith("9");
-                        }
-                    });
-                    System.out.println(Arrays.toString(files));
-                    String at = twoPointsVersionThanner(files[0].getName(), files[1].getName());
-                    File file = new File(libraryFile.getParentFile().getParentFile(), at);
-                    File[] files1 = file.listFiles(new FilenameFilter() {
-                        @Override
-                        public boolean accept(File dir, String name) {
-                            return !name.contains("native") && name.endsWith(".jar");
-                        }
-                    });
-                    if (files1[0] != null && files1[0].exists() && !librariesPaths.contains(files1[0].getAbsolutePath()) && !chongTu) {
-                        librariesPaths.add(files1[0].getAbsolutePath());
-                    }
-                }
-            }else{
-                if (libraryFile.exists() && !librariesPaths.contains(libraryFile.getAbsolutePath()) && !chongTu) {
-                    librariesPaths.add(libraryFile.getAbsolutePath());
-
-                }
-            }*/
-
-            //if (libraryFileParLf == 1) {
-                /*if (libraryFile.exists() && !librariesPaths.contains(libraryFile.getAbsolutePath()) && !chongTu) {
-                    librariesPaths.add(libraryFile.getAbsolutePath());
-                }*/
-            /*} else {
-                File file = libraryFile.getParentFile().getParentFile().listFiles()[libraryFile.getParentFile().getParentFile().listFiles().length - 1];
-                List<File> files = new ArrayList<>();//new File(file, file.list()[0]);
-                File[]var=file.listFiles();
-
-                for(File file1:var){
-                    if(!file1.getName().toLowerCase().contains("-natives-")) {
-                        files.add(file1);
-                    }
-                }
-
-                for(File file2:files) {
-                    if (file2.exists() && !librariesPaths.contains(file2.getAbsolutePath())) {
-                        librariesPaths.add(file2.getAbsolutePath());
-                    }
-                }
-            }*/
-
-
-            if(librariesPaths.size()>=1) {
+            File libraryFile = new File(new File(librariesFile, libraryFileAndDirectoryName), libraryFileName);
+            if (librariesPaths.size() >= 1) {
                 for (int n = 0; n < librariesPaths.size(); n++) {
-                    if (librariesPaths.get(n).startsWith(addSeparatorToPath(libraryFile.getParentFile().getParent()))) {
+                    if (addSeparatorToPath(librariesPaths.get(n)).startsWith(addSeparatorToPath(libraryFile.getParentFile().getParent()))) {
                         librariesPaths.remove(n);
                         break;
                     }
                 }
             }
+
             if (libraryFile.exists() && !librariesPaths.contains(libraryFile.getAbsolutePath())) {
                 librariesPaths.add(libraryFile.getAbsolutePath());
             }
@@ -1033,7 +1045,27 @@ public class MCLX {
             librariesString = librariesString + (isWindows() ? ";" : ":") + smloaderFile.getAbsolutePath().replace("\\", "\\\\");
         }
 
-        String parsed = arguments.replace("${main_class}", headJsonObject.optString("mainClass", "net.minecraft.client.main.Main")).replace("${sm_directory}", addShuangyinhaoToPath(SMDir.getAbsolutePath())).replace("${auth_player_name}", playername).replace("${version_name}", "\"MCLX " + MCLX_VERSION + "\"").replace("${version_type}", "\"MCLX " + MCLX_VERSION + "\"").replace("${auth_access_token}", accessToken).replace("${game_directory}", addShuangyinhaoToPath(gameDir.getAbsolutePath())).replace("${assets_root}", addShuangyinhaoToPath(assetsDir.getAbsolutePath())).replace("${assets_index_name}",/*ids[0]+"."+ids[1]*/assetsIndex).replace("--uuid ${auth_uuid}", "").replace("${user_type}", "mojang").replace("${auth_session}", "0").replace("${game_assets}", addShuangyinhaoToPath(assetsDir.getAbsolutePath()));
+        String assetsPath = addShuangyinhaoToPath(assetsDir.getAbsolutePath());
+
+        if (assetsIndex.equals("legacy")) {
+            String s = getFileSeparator(assetsDir.getAbsolutePath());
+            assetsPath = addShuangyinhaoToPath(addSeparatorToPath(assetsDir.getAbsolutePath()) + "virtual" + s + "legacy");
+        }
+
+        String parsed = arguments.replace("${main_class}", headJsonObject.optString("mainClass", "net.minecraft.client.main.Main"))
+                .replace("${sm_directory}", addShuangyinhaoToPath(SMDir.getAbsolutePath()))
+                .replace("${auth_player_name}", playername)
+                .replace("${version_name}", "\"MCLX " + MCLX_VERSION + "\"")
+                .replace("${version_type}", "\"MCLX " + MCLX_VERSION + "\"")
+                .replace("${auth_access_token}", accessToken)
+                .replace("${game_directory}", addShuangyinhaoToPath(gameDir.getAbsolutePath()))
+                .replace("${assets_root}", addShuangyinhaoToPath(assetsDir.getAbsolutePath()))
+                .replace("${assets_index_name}",/*ids[0]+"."+ids[1]*/assetsIndex)
+                .replace("${auth_uuid}", uuid)
+                .replace("${user_type}", "mojang")
+                .replace("${auth_session}", accessToken)
+                .replace("${game_assets}", assetsPath)
+                .replace("${user_properties}", "{}");
 
         parsed = parsed + " --resourcePackDir " + addShuangyinhaoToPath(resourcePacksDir.getAbsolutePath()) + " --dataPackDir " + addShuangyinhaoToPath(dataPacksDir.getAbsolutePath());
         if (fullscreen) {
@@ -1047,7 +1079,7 @@ public class MCLX {
         if (nativesFolder.exists()) {
             javaLibraryPath = "\"-Djava.library.path=" + nativesFolder.getAbsolutePath().replace("\\", "\\\\") + "\"";
         } else {
-            throw new LaunchException(Strings.EXCEPTION_NATIVE_LIBRARIES_NOT_FOUND);
+            throw new LaunchException(getString("EXCEPTION_NATIVE_LIBRARIES_NOT_FOUND"));
         }
 
         String command = addShuangyinhaoToPath(javaPath) + " -Xmn" + miniMemory + "m -Xmx" + maxMemory + "m " + javaLibraryPath + " -XX:+UseG1GC -XX:-UseAdaptiveSizePolicy -XX:-OmitStackTraceInFastThrow -Dfml.ignoreInvalidMinecraftCertificates=true -Dfml.ignorePatchDiscrepancies=true -Dminecraft.launcher.brand=MCLX -Dminecraft.launcher.version=" + MCLX_VERSION + " -cp \"" + librariesString + "\" " + mainClass + " " + parsed;
@@ -1055,9 +1087,8 @@ public class MCLX {
         /*if(logsOutput!=null) {net.minecraft.client.main.Main --username XPlayer --version "MCLX 1.0" --gameDir "C:\\Users\\Administrator\\Documents\\MCLX\\.minecraft" --assetsDir "C:\\Users\\Administrator\\Documents\\MCLX\\.minecraft\\assets" --assetIndex 1.16  --accessToken 0 --userType legacy --versionType "MCLX 1.0" --resourcePackDir "C:\\Users\\Administrator\\Documents\\MCLX\\.minecraft\\resourcepacks" --dataPackDir "C:\\Users\\Administrator\\Documents\\MCLX\\.minecraft\\datapacks" --width 854 --height 480
             System.setOut(new PrintStream(logsOutput));
         }*/
-        System.out.println(command);
-        Runtime run = Runtime.getRuntime();
-        return run.exec(command);
+        if (mode == LAUNCH_MODE_LAUNCH) return Runtime.getRuntime().exec(command);
+        else return command;
     }
 
     public static String addShuangyinhaoToPath(String path) {
@@ -1076,27 +1107,27 @@ public class MCLX {
     }
 
     public static String addSeparatorToPath(String path) {
-        String separator=getFileSeparator(path);
+        String separator = getFileSeparator(path);
         if (!path.endsWith(separator)) {
             path = path + separator;
         }
         return path;
     }
 
-    public static void copyDirectory(File from,String toWillNewDirNameIsAtFromName,String afterThatName)throws IOException{
-        if(from!=null&&!isEmpty(toWillNewDirNameIsAtFromName)&&from.exists()){
-            if(from.isFile()) {
+    public static void copyDirectory(File from, String toWillNewDirNameIsAtFromName, String afterThatName) throws IOException {
+        if (from != null && !isEmpty(toWillNewDirNameIsAtFromName) && from.exists()) {
+            if (from.isFile()) {
                 copyFile(from, new File(toWillNewDirNameIsAtFromName, afterThatName));
                 return;
             }
-            File toWillNewDirNameIsAtFrom=new File(toWillNewDirNameIsAtFromName);
-            File to=new File(toWillNewDirNameIsAtFrom,afterThatName);
-            if(!to.exists())to.mkdirs();
-            for(File file:from.listFiles()){
-                if(file.isFile()){
-                    copyFile(file,new File(to,file.getName()));
-                }else{
-                    copyDirectory(file,to.getAbsolutePath(),file.getName());
+            File toWillNewDirNameIsAtFrom = new File(toWillNewDirNameIsAtFromName);
+            File to = new File(toWillNewDirNameIsAtFrom, afterThatName);
+            if (!to.exists()) to.mkdirs();
+            for (File file : from.listFiles()) {
+                if (file.isFile()) {
+                    copyFile(file, new File(to, file.getName()));
+                } else {
+                    copyDirectory(file, to.getAbsolutePath(), file.getName());
                 }
             }
         }
@@ -1104,8 +1135,8 @@ public class MCLX {
 
     public static void copyFile(File source, File to)
             throws IOException {
-        if(source==null)return;
-        if(source.isDirectory())copyDirectory(source,to.getParent(),to.getName());
+        if (null == source) return;
+        if (source.isDirectory()) copyDirectory(source, to.getParent(), to.getName());
         if (to.exists()) {
             to.delete();
         }
@@ -1138,7 +1169,7 @@ public class MCLX {
     }
 
     public static File addTo(File startFile, String needToAddNoSeparatorStart) {
-        String path = startFile.getAbsolutePath();
+        /*String path = startFile.getAbsolutePath();
         String separator = "/";
         if (hasWindowsFileSeparator(path)) {
             separator = "\\";
@@ -1147,7 +1178,8 @@ public class MCLX {
             return new File(path + needToAddNoSeparatorStart);
         } else {
             return new File(path + separator + needToAddNoSeparatorStart);
-        }
+        }*/
+        return new File(startFile, needToAddNoSeparatorStart);
     }
 
     public static String getFileSeparator(String path) {
@@ -1199,7 +1231,7 @@ public class MCLX {
         return false;
     }
 
-    private static void downloadFile(String url, File to) throws IOException {
+    public static void downloadFile(String url, File to) throws IOException {
         BufferedInputStream in = new BufferedInputStream(new URL(url).openStream());
         FileOutputStream fileOutputStream = new FileOutputStream(to);
         byte dataBuffer[] = new byte[1024];
@@ -1209,7 +1241,7 @@ public class MCLX {
         }
     }
 
-    private static void downloadFile(String urla, File to, JProgressBar progressBar) throws IOException {
+    public static void downloadFile(String urla, File to, JProgressBar progressBar) throws IOException {
         URL url = new URL(urla);
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         int completeFileSize = httpConnection.getContentLength();
@@ -1248,16 +1280,16 @@ public class MCLX {
     }
 
     private static String showInputNameDialog(Component parent, String defaultName, String message) {
-        String ret = (String) JOptionPane.showInputDialog(parent, message, Strings.MENU_INSTALL_NEW_VERSION, JOptionPane.QUESTION_MESSAGE, null, null, defaultName);
+        String ret = (String) JOptionPane.showInputDialog(parent, message, getString("MENU_INSTALL_NEW_VERSION"), JOptionPane.QUESTION_MESSAGE, null, null, defaultName);
         if (ret != null) {
             if (ret.length() == 0) {
-                return showInputNameDialog(parent, ret, Strings.MESSAGE_INSTALL_INPUT_NAME_IS_EMPTY);
+                return showInputNameDialog(parent, ret, getString("MESSAGE_INSTALL_INPUT_NAME_IS_EMPTY"));
             }
-            if(versionsDir.exists()) {
+            if (versionsDir.exists()) {
                 String[] versions = versionsDir.list();
-                if(versions!=null&&versions.length!=0) {
+                if (versions != null && versions.length != 0) {
                     if (Arrays.asList(versions).contains(ret)) {
-                        return showInputNameDialog(parent, ret, String.format(Strings.MESSAGE_INSTALL_INPUT_NAME_EXISTS, ret));
+                        return showInputNameDialog(parent, ret, String.format(getString("MESSAGE_INSTALL_INPUT_NAME_EXISTS"), ret));
                     }
                 }
             }
@@ -1266,7 +1298,7 @@ public class MCLX {
     }
 
     public static boolean isEmpty(String s) {
-        return s == null || s.length() == 0;
+        return null == s || s.length() == 0;
     }
 
 
@@ -1280,7 +1312,7 @@ public class MCLX {
 
     public static void unZip(File srcFile, File to, JProgressBar progressBar) throws IOException {
         int BUFFER_SIZE = 2048;
-        if (srcFile!=null&&srcFile.exists()) {
+        if (srcFile != null && srcFile.exists()) {
             ZipFile zipFile = new ZipFile(srcFile);
 
             if (progressBar != null)
@@ -1371,5 +1403,56 @@ public class MCLX {
             return str2;
         }
     }*/
+
+    public static String getString(String name) {
+        if (null == enUSText) {
+            try {
+                InputStream inputStream = MCLX.class.getResourceAsStream("/texts/en_us.json");
+                BufferedReader reader;
+                StringBuffer sbf = new StringBuffer();
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+                String tempStr;
+                while ((tempStr = reader.readLine()) != null) {
+                    sbf.append(tempStr);
+                }
+                reader.close();
+                enUSText = new JSONObject(sbf.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        if (null == zhCNText) {
+            try {
+                InputStream inputStream = MCLX.class.getResourceAsStream("/texts/zh_cn.json");
+                BufferedReader reader;
+                StringBuffer sbf = new StringBuffer();
+                reader = new BufferedReader(new InputStreamReader(inputStream));
+                String tempStr;
+                while ((tempStr = reader.readLine()) != null) {
+                    sbf.append(tempStr);
+                }
+                reader.close();
+                zhCNText = new JSONObject(sbf.toString());
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+        return getLanguage().equals("zh") ? (zhCNText != null ? zhCNText.optString(name) : "") : (enUSText != null ? enUSText.optString(name) : "");
+    }
+
+    public static String getLanguage() {
+        if (isEmpty(language)) language = Locale.getDefault().getLanguage();
+        return language;
+    }
+
+    public static void copyText(String text) {
+        Clipboard clip = Toolkit.getDefaultToolkit().getSystemClipboard();
+        Transferable tText = new StringSelection(text);
+        clip.setContents(tText, null);
+    }
+
+    public static void errorDialog(Component frame, String message, String titleIfEmptyNotice) {
+        JOptionPane.showMessageDialog(frame, message, titleIfEmptyNotice != null ? titleIfEmptyNotice : getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+    }
 
 }
