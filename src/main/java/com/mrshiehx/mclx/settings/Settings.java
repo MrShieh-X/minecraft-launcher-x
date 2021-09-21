@@ -1,6 +1,15 @@
-package com.mrshiehx.mclx;
+package com.mrshiehx.mclx.settings;
 
+import com.mrshiehx.mclx.MinecraftLauncherX;
+import com.mrshiehx.mclx.modules.account.loginner.MicrosoftAccountLoginner;
+import com.mrshiehx.mclx.modules.account.skin.SkinChanger;
+import com.mrshiehx.mclx.modules.account.skin.SkinDownloader;
+import com.mrshiehx.mclx.modules.account.skin.SkinResetter;
+import com.mrshiehx.mclx.swing.documents.NumberLenghtLimitedDmt;
+import com.mrshiehx.mclx.utils.Utils;
+import com.mrshiehx.mclx.microsoft.MicrosoftAuthenticationServer;
 import com.sun.management.OperatingSystemMXBean;
+import fi.iki.elonen.NanoHTTPD;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -14,12 +23,14 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.*;
 import java.lang.management.ManagementFactory;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.util.Base64;
+import java.net.*;
+import java.util.UUID;
 
-import static com.mrshiehx.mclx.MCLX.*;
+import static com.mrshiehx.mclx.MinecraftLauncherX.*;
+import static com.mrshiehx.mclx.utils.Utils.post;
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static com.mrshiehx.mclx.modules.account.loginner.MicrosoftAccountLoginner.*;
+import static com.mrshiehx.mclx.modules.account.loginner.MojangAccountLoginner.*;
 
 public class Settings extends JDialog {
     JLabel playernameLabel = new JLabel();
@@ -46,7 +57,7 @@ public class Settings extends JDialog {
     JButton browseDataPackDir = new JButton();
     JButton browseSMDir = new JButton();
     JButton loginOrOut = new JButton();
-    JComponent playerName;
+    public JComponent playerName;
     JTextField maxMemory = new JTextField();
     JTextField javaPath = new JTextField();
     JTextField windowSizeWidth = new JTextField();
@@ -60,13 +71,13 @@ public class Settings extends JDialog {
     JMenuBar menuBar = new JMenuBar();
     JMenu menu = new JMenu(getString("SETTINGS_MENU_OFFICIAL_ACCOUNT_NAME"));
 
-    static File configFile = new File("mclx.json");
+    public static File configFile = new File("mclx.json");
     //static String configContent;
 
-    static Settings instance;
+    private static Settings instance;
 
     public Settings(JFrame parent, boolean modal) {
-        /*frame = new JFrame(getString("APPLICATION_NAME"));
+        /*frame = new JFrame(getString("APPLICATION_SHORT_NAME"));
         frame.setLayout(null);
         frame.setResizable(false);
         //frame.setVisible(true);
@@ -120,150 +131,37 @@ public class Settings extends JDialog {
         JMenuItem refreshOA = new JMenuItem(getString("SETTINGS_BUTTON_REFRESH_OFFICIAL_ACCOUNT_TEXT"));
         JMenuItem downloadSkin = new JMenuItem(getString("SETTINGS_MENU_DOWNLOAD_SKIN"));
         JMenuItem changeSkin = new JMenuItem(getString("SETTINGS_MENU_CHANGE_SKIN"));
+        JMenuItem resetSkin = new JMenuItem(getString("SETTINGS_MENU_RESET_SKIN"));
+        resetSkin.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                SkinResetter.showDialog(Settings.this);
+            }
+        });
         downloadSkin.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File file = selectSkin(getString("DIALOG_DOWNLOAD_SKIN_FILE_TITLE"));
-                if (file != null) {
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject = new JSONObject(configContent);
-                    } catch (JSONException ex) {
-                        ex.printStackTrace();
-                    }
-                    String uuid = jsonObject.getString("uu");
-                    if (!isEmpty(uuid)) {
-                        try {
-                            URL url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid);
-                            JSONObject result = new JSONObject(httpURLConnection2String((HttpURLConnection) url.openConnection()));
-                            JSONArray properties = result.getJSONArray("properties");
-                            for (int i = 0; i < properties.length(); i++) {
-                                JSONObject jsonObject1 = properties.optJSONObject(i);
-                                if (jsonObject1 != null) {
-                                    if (jsonObject1.optString("name").equals("textures")) {
-                                        JSONObject jsonObject2 = new JSONObject(new String(Base64.getDecoder().decode(jsonObject1.optString("value"))));
-                                        JSONObject var = jsonObject2.optJSONObject("textures");
-                                        if (var.has("SKIN")) {
-                                            MCLX.downloadFile(var.optJSONObject("SKIN").optString("url"), file);
-                                            JOptionPane.showMessageDialog(Settings.this, getString("DIALOG_DOWNLOADED_SKIN_FILE_TEXT"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.INFORMATION_MESSAGE);
-                                        } else {
-                                            JOptionPane.showMessageDialog(Settings.this, getString("DIALOG_DOWNLOAD_SKIN_FILE_NOT_SET_TEXT"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.WARNING_MESSAGE);
-                                        }
-                                        break;
-                                    }
-                                }
-                            }
-                        } catch (Exception exception) {
-                            exception.printStackTrace();
-                            errorDialog(Settings.this, exception.toString(), null);
-                        }
-                    } else {
-                        errorDialog(Settings.this, getString("MESSAGE_UUID_ACCESSTOKEN_EMPTY"), null);
-                    }
-                }
+                SkinDownloader.start(Settings.this);
             }
         });
         changeSkin.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                File file = selectSkin(getString("DIALOG_CHANGE_SKIN_FILE_TITLE"));
-                if (file != null) {
-                    JSONObject jsonObject = new JSONObject();
-                    try {
-                        jsonObject = new JSONObject(configContent);
-                    } catch (JSONException ex) {
-                        ex.printStackTrace();
-                    }
-                    String uuid = jsonObject.optString("uu");
-                    String accessToken = jsonObject.optString("at");
-                    if (!isEmpty(uuid) && !isEmpty(accessToken)) {
-                        try {
-                            URL url = new URL("https://api.mojang.com/user/profile/" + uuid + "/skin");
-                            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-                            connection.setUseCaches(false);
-                            connection.setConnectTimeout(15000);
-                            connection.setReadTimeout(15000);
-                            connection.setRequestMethod("PUT");
-                            connection.setRequestProperty("Authorization", "Bearer " + accessToken);
-                            connection.setRequestProperty("Accept", "*/*");
-                            String boundary = "~~~~~~~~~~~~~~~~~~~~~~~~~";
-                            connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
-                            connection.setDoOutput(true);
-
-                            String var1 = "";
-                            int var2 = file.getName().lastIndexOf("\\.");
-                            if (var2 != -1) {
-                                var1 = "/" + file.getName().substring(var2 + 1);
-                            }
-
-                            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-
-                            byte[] sl = "\r\n".getBytes(UTF_8);
-                            byteArrayOutputStream.write(("--" + boundary).getBytes(UTF_8));
-                            byteArrayOutputStream.write(sl);
-
-                            byteArrayOutputStream.write("Content-Disposition: form-data; name=\"model\"".getBytes(UTF_8));
-                            byteArrayOutputStream.write(sl);
-                            byteArrayOutputStream.write(sl);
-                            String[] models = new String[]{"Steve", "Alex (slim)"};
-
-                            String modelx = (String) JOptionPane.showInputDialog(
-                                    Settings.this,
-                                    getString("DIALOG_CHANGE_SKIN_SELECT_MODEL_TITLE"),
-                                    getString("DIALOG_TITLE_NOTICE"),
-                                    JOptionPane.PLAIN_MESSAGE,
-                                    null,
-                                    models,
-                                    models[0]
-                            );
-
-                            String model = "";
-                            if (!isEmpty(modelx) && modelx.equals(models[1])) model = "slim";
-
-                            byteArrayOutputStream.write(model.getBytes(UTF_8));
-                            byteArrayOutputStream.write(sl);
-
-                            byteArrayOutputStream.write(("--" + boundary).getBytes(UTF_8));
-                            byteArrayOutputStream.write(sl);
-                            byteArrayOutputStream.write(("Content-Disposition: form-data; name=\"file\"; filename=\"" + file.getName() + "\"").getBytes(UTF_8));
-                            byteArrayOutputStream.write(sl);
-                            byteArrayOutputStream.write(("Content-Type: image" + var1).getBytes(UTF_8));
-                            byteArrayOutputStream.write(sl);
-                            byteArrayOutputStream.write(sl);
-                            if (!file.exists()) file.createNewFile();
-                            copyTo(new FileInputStream(file), byteArrayOutputStream, new byte[8192]);
-                            byteArrayOutputStream.write(sl);
-                            byteArrayOutputStream.write(("--" + boundary + "--").getBytes(UTF_8));
-                            connection.setRequestProperty("Content-Length", String.valueOf(byteArrayOutputStream.size()));
-                            OutputStream outputStream = connection.getOutputStream();
-
-                            outputStream.write(byteArrayOutputStream.toByteArray());
-
-                            //System.out.println(byteArrayOutputStream.toString());
-
-                            String var = httpURLConnection2String(connection);
-
-                            if (!isEmpty(var) && var.startsWith("{")) {
-                                JSONObject result = new JSONObject(var);
-                                JOptionPane.showMessageDialog(Settings.this, String.format(getString("DIALOG_OFFICIAL_LOGIN_FAILED_TEXT"), result.optString("error"), result.optString("errorMessage")), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
-                            } else {
-                                JOptionPane.showMessageDialog(Settings.this, getString("DIALOG_CHANGED_SKIN_FILE_TEXT"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.INFORMATION_MESSAGE);
-                            }
-                        } catch (Exception exception) {
-                            exception.printStackTrace();
-                            errorDialog(Settings.this, exception.toString(), null);
-                        }
-
-
-                    } else {
-                        errorDialog(Settings.this, getString("MESSAGE_UUID_ACCESSTOKEN_EMPTY"), null);
-                    }
-                }
+                SkinChanger.start(Settings.this);
             }
         });
         menu.add(refreshOA);
         menu.add(downloadSkin);
-        menu.add(changeSkin);
+        JSONObject jsonObject = new JSONObject();
+        try {
+            jsonObject = new JSONObject(configContent);
+        } catch (JSONException ee) {
+            ee.printStackTrace();
+        }
+        if(jsonObject.optInt("lm")==1) {
+            menu.add(changeSkin);
+            menu.add(resetSkin);
+        }
         menu.addMouseListener(new MouseListener() {
             public void mouseClicked(MouseEvent e) {
                 JSONObject jsonObject = new JSONObject();
@@ -272,10 +170,12 @@ public class Settings extends JDialog {
                 } catch (JSONException ee) {
                     ee.printStackTrace();
                 }
-                boolean var = jsonObject.optBoolean("ol");
+                int lm=jsonObject.optInt("lm");
+                boolean var = (lm > 0);
                 refreshOA.setEnabled(var);
                 downloadSkin.setEnabled(var);
-                changeSkin.setEnabled(var);
+                changeSkin.setVisible(lm==1);
+                resetSkin.setVisible(lm==1);
             }
 
             public void mousePressed(MouseEvent e) {
@@ -304,10 +204,10 @@ public class Settings extends JDialog {
                 JFileChooser fileChooser = new JFileChooser();
                 //FileSystemView fsv = FileSystemView.getFileSystemView();
                 fileChooser.setCurrentDirectory(/*fsv.getHomeDirectory()*/new File("."));
-                fileChooser.setDialogTitle(MCLX.isWindows() ? getString("DIALOG_CHOOSE_JAVA_EXE_FILE_TITLE") : getString("DIALOG_CHOOSE_JAVA_FILE_TITLE"));
+                fileChooser.setDialogTitle(MinecraftLauncherX.isWindows() ? getString("DIALOG_CHOOSE_JAVA_EXE_FILE_TITLE") : getString("DIALOG_CHOOSE_JAVA_FILE_TITLE"));
                 fileChooser.setApproveButtonText(getString("DIALOG_BUTTON_YES_TEXT"));
                 fileChooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
-                if (MCLX.isWindows()) {
+                if (MinecraftLauncherX.isWindows()) {
                     fileChooser.setFileFilter(new javax.swing.filechooser.FileFilter() {
                         @Override
                         public boolean accept(File f) {
@@ -357,7 +257,9 @@ public class Settings extends JDialog {
             }
         });
 
-        customWorkPaths.setBounds(12, 185, 385, 15);
+        int smSuffix=loadSM.getHeight()+(whatIsSM.getY()-(fullscreen.getY()+fullscreen.getHeight()))+5;
+
+        customWorkPaths.setBounds(12, 185-smSuffix, 385, 15);
         customWorkPaths.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -366,32 +268,32 @@ public class Settings extends JDialog {
         });
 
 
-        customGameDir.setBounds(15, 215, 110, 15);
-        gameDir.setBounds(140, 210, 150, 25);
-        browseGameDir.setBounds(295, 210, 80, 25);
+        customGameDir.setBounds(15, 215-smSuffix, 110, 15);
+        gameDir.setBounds(140, 210-smSuffix, 150, 25);
+        browseGameDir.setBounds(295, 210-smSuffix, 80, 25);
         setBrowseButtonListener(browseGameDir, gameDir, getString("DIALOG_CHOOSE_GAME_DIR_TITLE"), getString("DIALOG_CHOOSE_TYPE_GAME_DIR_TEXT"));
 
-        customAssetsDirL.setBounds(15, 245, 110, 15);
-        assetsDir.setBounds(140, 240, 150, 25);
-        browseAssetsDir.setBounds(295, 240, 80, 25);
+        customAssetsDirL.setBounds(15, 245-smSuffix, 110, 15);
+        assetsDir.setBounds(140, 240-smSuffix, 150, 25);
+        browseAssetsDir.setBounds(295, 240-smSuffix, 80, 25);
         setBrowseButtonListener(browseAssetsDir, assetsDir, getString("DIALOG_CHOOSE_ASSETS_DIR_TITLE"), getString("DIALOG_CHOOSE_TYPE_ASSETS_DIR_TEXT"));
 
-        customResourcePackDirLabel.setBounds(15, 275, 110, 15);
-        resourcePackDir.setBounds(140, 270, 150, 25);
-        browseResourcePackDir.setBounds(295, 270, 80, 25);
+        customResourcePackDirLabel.setBounds(15, 275-smSuffix, 110, 15);
+        resourcePackDir.setBounds(140, 270-smSuffix, 150, 25);
+        browseResourcePackDir.setBounds(295, 270-smSuffix, 80, 25);
         setBrowseButtonListener(browseResourcePackDir, resourcePackDir, getString("DIALOG_CHOOSE_RESOURCE_PACK_DIR_TITLE"), getString("DIALOG_CHOOSE_TYPE_RESOURCE_PACK_DIR_TEXT"));
 
-        customDataPackDirLabel.setBounds(15, 305, 110, 15);
-        dataPackDir.setBounds(140, 300, 150, 25);
-        browseDataPackDir.setBounds(295, 300, 80, 25);
+        customDataPackDirLabel.setBounds(15, 305-smSuffix, 110, 15);
+        dataPackDir.setBounds(140, 300-smSuffix, 150, 25);
+        browseDataPackDir.setBounds(295, 300-smSuffix, 80, 25);
         setBrowseButtonListener(browseDataPackDir, dataPackDir, getString("DIALOG_CHOOSE_DATA_PACK_DIR_TITLE"), getString("DIALOG_CHOOSE_TYPE_DATA_PACK_DIR_TEXT"));
 
-        customSMDirLabel.setBounds(15, 335, 110, 15);
-        smPath.setBounds(140, 330, 150, 25);
-        browseSMDir.setBounds(295, 330, 80, 25);
+        customSMDirLabel.setBounds(15, 335-smSuffix, 110, 15);
+        smPath.setBounds(140, 330-smSuffix, 150, 25);
+        browseSMDir.setBounds(295, 330-smSuffix, 80, 25);
         setBrowseButtonListener(browseSMDir, smPath, getString("DIALOG_CHOOSE_SM_DIR_TITLE"), getString("DIALOG_CHOOSE_TYPE_SM_DIR_TEXT"));
 
-        cancel.setBounds(295, 360, 80, 25);
+        cancel.setBounds(295, 360-smSuffix, 80, 25);
         cancel.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -402,7 +304,7 @@ public class Settings extends JDialog {
             }
         });
 
-        save.setBounds(210, 360, 80, 25);
+        save.setBounds(210, 360-smSuffix, 80, 25);
         save.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -413,7 +315,7 @@ public class Settings extends JDialog {
                     jsonObject = new JSONObject();
                 }
 
-                if (!jsonObject.optBoolean("ol")) {
+                if (!(jsonObject.optInt("lm") > 0)) {
                     jsonObject.put("pn", ((JTextField) playerName).getText());
                 }
                 jsonObject.put("mm", maxMemory.getText().length() != 0 ? Integer.parseInt(maxMemory.getText()) : 0);
@@ -428,14 +330,14 @@ public class Settings extends JDialog {
                 jsonObject.put("rd", resourcePackDir.getText());
                 jsonObject.put("dd", dataPackDir.getText());
                 jsonObject.put("sd", smPath.getText());
-                MCLX.configContent = jsonObject.toString();
-                MCLX.javaPath = javaPath.getText();
+                MinecraftLauncherX.configContent = jsonObject.toString();
+                MinecraftLauncherX.javaPath = javaPath.getText();
                 if (customWorkPaths.isSelected()) {
-                    MCLX.gameDir = new File(gameDir.getText());
-                    MCLX.assetsDir = new File(assetsDir.getText());
-                    MCLX.respackDir = new File(resourcePackDir.getText());
-                    MCLX.datapackDir = new File(dataPackDir.getText());
-                    MCLX.smDir = new File(smPath.getText());
+                    MinecraftLauncherX.gameDir = new File(gameDir.getText());
+                    MinecraftLauncherX.assetsDir = !Utils.isEmpty(assetsDir.getText())?new File(assetsDir.getText()):new File(MinecraftLauncherX.gameDir, "assets");
+                    MinecraftLauncherX.respackDir = !Utils.isEmpty(resourcePackDir.getText())?new File(resourcePackDir.getText()):new File(MinecraftLauncherX.gameDir, "resourcepacks");
+                    MinecraftLauncherX.datapackDir = !Utils.isEmpty(dataPackDir.getText())?new File(dataPackDir.getText()):new File(MinecraftLauncherX.gameDir, "datapacks");
+                    MinecraftLauncherX.smDir = !Utils.isEmpty(smPath.getText())?new File(smPath.getText()):new File(MinecraftLauncherX.gameDir, "simplemods");
 
                     /*if(gameDir.getText().endsWith("/")||gameDir.getText().endsWith("\\")){
                         MCLX.versionsDir=new File(gameDir.getText()+"versions");
@@ -448,14 +350,14 @@ public class Settings extends JDialog {
                     }*/
 
                 } else {
-                    MCLX.gameDir = new File(".minecraft");
-                    MCLX.assetsDir = new File(MCLX.gameDir, "assets");
-                    MCLX.respackDir = new File(MCLX.gameDir, "resourcepacks");
-                    MCLX.datapackDir = new File(MCLX.gameDir, "datapacks");
-                    MCLX.smDir = new File(MCLX.gameDir, "simplemods");
+                    MinecraftLauncherX.gameDir = new File(".minecraft");
+                    MinecraftLauncherX.assetsDir = new File(MinecraftLauncherX.gameDir, "assets");
+                    MinecraftLauncherX.respackDir = new File(MinecraftLauncherX.gameDir, "resourcepacks");
+                    MinecraftLauncherX.datapackDir = new File(MinecraftLauncherX.gameDir, "datapacks");
+                    MinecraftLauncherX.smDir = new File(MinecraftLauncherX.gameDir, "simplemods");
                 }
-                MCLX.versionsDir = new File(MCLX.gameDir, "versions");
-                MCLX.updateVersions();
+                MinecraftLauncherX.versionsDir = new File(MinecraftLauncherX.gameDir, "versions");
+                MinecraftLauncherX.updateVersions();
                 try {
                     if (!configFile.exists()) {
                         configFile.createNewFile();
@@ -482,20 +384,72 @@ public class Settings extends JDialog {
                 String account = null;
                 JSONObject var = new JSONObject();
                 try {
-                    var = new JSONObject(MCLX.configContent);
+                    var = new JSONObject(MinecraftLauncherX.configContent);
                 } catch (JSONException exception) {
                     exception.printStackTrace();
                 }
-                try {
-                    account = var.getString("ea");
-                } catch (JSONException exception) {
-                    exception.printStackTrace();
+                switch (var.optInt("lm")) {
+                    case 1:
+                        try {
+                            account = var.getString("ea");
+                        } catch (JSONException exception) {
+                            exception.printStackTrace();
+                        }
+                        loginMojangAccount(Settings.this,account, account == null, var, getString("DIALOG_OFFICIAL_REFRESHED_TITLE"));
+                        break;
+                    case 2:
+                        try {
+                            JSONObject mcSecond = Utils.parseJSONObject(Utils.get("https://api.minecraftservices.com/minecraft/profile", var.optString("tt", "Bearer"), var.optString("at")));
+
+                            if (mcSecond != null) {
+
+                                //stem.ut.println("microsoft_first : " + first);
+                                //stem.ut.println("microsoft_second: " + second);
+                                //stem.ut.println("xboxLive first  : " + xboxLive);
+                                //stem.ut.println("xstsResult first: " + xstsResult);
+                                //stem.ut.println("mc         first: " + mcFirst);
+                                //stem.ut.println("mc        second: " + mcSecond);
+                                if (mcSecond.has("error") || mcSecond.has("errorMessage")) {
+                                    String var2 = mcSecond.optString("errorMessage");
+                                    JOptionPane.showMessageDialog(Settings.this, String.format(getString("DIALOG_OFFICIAL_LOGIN_FAILED_TEXT"), mcSecond.optString("error"), var2), getString("DIALOG_OFFICIAL_REFRESHED_TITLE"), JOptionPane.ERROR_MESSAGE);
+                                } else {
+                                    var.put("lm", 2);
+                                    var.put("uu", mcSecond.optString("id"));
+                                    var.put("pn", mcSecond.optString("name"));
+                                    MinecraftLauncherX.configContent = var.toString();
+                                    try {
+                                        FileWriter writer = new FileWriter(configFile, false);
+                                        writer.write(MinecraftLauncherX.configContent);
+                                        writer.close();
+                                    } catch (IOException ex) {
+                                        ex.printStackTrace();
+                                    }
+                                    //((JLabel) playerName).setText(selectedProfileJo.optString("name"));
+                                    loadAccount(var, false);
+
+                                    remove(playerName);
+                                    playerName = new JLabel();
+                                    playerName.setBounds(140, 15, 135, 25);
+                                    add(playerName);
+                                    ((JLabel) playerName).setText(var.optString("pn"));
+                                    JOptionPane.showMessageDialog(Settings.this, getString("DIALOG_OFFICIAL_REFRESHED_TITLE"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.INFORMATION_MESSAGE);
+
+                                    return;
+                                }
+                            } else {
+                                //stem.ut.println(849);
+                                JOptionPane.showMessageDialog(Settings.this, getString("DIALOG_OFFICIAL_FAILED_REFRESH_TITLE"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+                            }
+                        } catch (Exception ee) {
+                            //stem.ut.println(849);
+                            JOptionPane.showMessageDialog(Settings.this, ee, getString("DIALOG_OFFICIAL_FAILED_REFRESH_TITLE"), JOptionPane.ERROR_MESSAGE);
+                        }
+                        break;
                 }
-                loginAccount(account, account == null, var, getString("DIALOG_OFFICIAL_REFRESHED_TITLE"));
             }
         });
 
-        this.setBounds(100, 100, 405, 455);
+        this.setBounds(100, 100, 405, 455-smSuffix);
         this.add(maxMemoryLabel);
         this.add(memoryUnitLabel);
         this.add(javaPathLabel);
@@ -506,9 +460,9 @@ public class Settings extends JDialog {
         this.add(customDataPackDirLabel);
         this.add(customSMDirLabel);
         this.add(fullscreen);
-        this.add(loadSM);
+        //this.add(loadSM);
         this.add(customWorkPaths);
-        this.add(whatIsSM);
+        //this.add(whatIsSM);
         this.add(browse);
         this.add(save);
         this.add(maxMemory);
@@ -593,7 +547,7 @@ public class Settings extends JDialog {
         JSONObject jsonObject = new JSONObject();
         if (configFile.exists()) {
             try {
-                configContent = MCLX.readFileContent(configFile);
+                configContent = MinecraftLauncherX.readFileContent(configFile);
                 jsonObject = new JSONObject(configContent);
 
             } catch (Exception e) {
@@ -602,7 +556,7 @@ public class Settings extends JDialog {
         }
         instance.loadAccount(jsonObject, true);
         JComponent component = instance.playerName;
-        if (jsonObject.optBoolean("ol")) {
+        if ((jsonObject.optInt("lm") > 0)) {
             ((JLabel) component).setText(jsonObject.optString("pn"));
         } else {
             ((JTextField) component).setText(jsonObject.optString("pn"));
@@ -629,7 +583,7 @@ public class Settings extends JDialog {
     }
 
 
-    private void loadAccount(JSONObject jsonObject, boolean shouldAdd) {
+    public void loadAccount(JSONObject jsonObject, boolean shouldAdd) {
         if (shouldAdd) {
             if (playerName != null) this.remove(playerName);
             this.remove(playernameLabel);
@@ -639,14 +593,24 @@ public class Settings extends JDialog {
             loginOrOut.removeActionListener(actionListener);
         }
         ActionListener actionListener;
-        boolean var = jsonObject.optBoolean("ol");
+        boolean var = (jsonObject.optInt("lm") > 0);
         //refreshOA.setEnabled(var);
         if (var) {
             if (shouldAdd) {
                 playerName = new JLabel();
                 ((JLabel) playerName).setText(jsonObject.optString("pn"));
             }
-            playernameLabel.setText(getString("SETTINGS_TEXTFIELD_OFFICIAL_PLAYERNAME_TIP_TEXT"));
+            switch(jsonObject.optInt("lm")){
+                case 1:
+                    playernameLabel.setText(getString("SETTINGS_TEXTFIELD_OFFICIAL_MOJANG_PLAYERNAME_TIP_TEXT"));
+                    break;
+                case 2:
+                    playernameLabel.setText(getString("SETTINGS_TEXTFIELD_OFFICIAL_MICROSOFT_PLAYERNAME_TIP_TEXT"));
+                    break;
+                default:
+                    playernameLabel.setText(getString("SETTINGS_TEXTFIELD_OFFICIAL_PLAYERNAME_TIP_TEXT"));
+                    break;
+            }
             loginOrOut.setText(getString("SETTINGS_BUTTON_OFFICIAL_LOGOUT_TEXT"));
             actionListener = new ActionListener() {
                 @Override
@@ -659,11 +623,11 @@ public class Settings extends JDialog {
                             JOptionPane.YES_NO_OPTION
                     );
                     if (result == JOptionPane.YES_OPTION) {
-                        jsonObject.remove("ol"/*,"offline"*/);
+                        jsonObject.remove("lm"/*,"offline"*/);
                         jsonObject.remove("at");
                         jsonObject.remove("uu");
                         jsonObject.remove("ea");
-                        MCLX.configContent = jsonObject.toString();
+                        MinecraftLauncherX.configContent = jsonObject.toString();
                         try {
                             FileWriter writer = new FileWriter(configFile, false);
                             writer.write(jsonObject.toString());
@@ -693,14 +657,41 @@ public class Settings extends JDialog {
             actionListener = new ActionListener() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    loginAccount(null, true, jsonObject, getString("DIALOG_OFFICIAL_LOGINED_TITLE"));
+                    String[] models = new String[]{getString("LOGIN_METHOD_MOJANG"), getString("LOGIN_METHOD_MICROSOFT")};
+
+                    String methodString = (String) JOptionPane.showInputDialog(
+                            Settings.this,
+                            getString("LOGIN_METHOD_MESSAGE"),
+                            getString("DIALOG_TITLE_NOTICE"),
+                            JOptionPane.PLAIN_MESSAGE,
+                            null,
+                            models,
+                            models[0]
+                    );
+
+                    int method = -1;
+                    if (!isEmpty(methodString) && methodString.equals(models[0])) {
+                        method = 0;
+                    } else if (!isEmpty(methodString) && methodString.equals(models[1])) {
+                        method = 1;
+                    }
+
+                    switch (method) {
+                        case 0:
+                            loginMojangAccount(Settings.this,null, true, jsonObject, getString("DIALOG_OFFICIAL_LOGINED_TITLE"));
+                            break;
+                        case 1:
+                            MicrosoftAccountLoginner.loginMicrosoftAccount(Settings.this,jsonObject, getString("DIALOG_OFFICIAL_LOGINED_TITLE"));
+                            break;
+                    }
+
                 }
             };
         }
         loginOrOut.addActionListener(actionListener);
         playerName.setBounds(140, 15, 135, 25);
         loginOrOut.setBorder(new EmptyBorder(0, 0, 0, 0));
-        if (!MCLX.getLanguage().equals("zh")) {
+        if (!MinecraftLauncherX.getLanguage().equals("zh")) {
             loginOrOut.setFont(new Font(null, Font.PLAIN, 9));
         }
         loginOrOut.setBounds(280, 15, 95, 25);
@@ -711,6 +702,8 @@ public class Settings extends JDialog {
             this.add(loginOrOut);
         }
     }
+
+
 
     public static String httpURLConnection2String(HttpURLConnection con) throws IOException {
         try {
@@ -748,107 +741,8 @@ public class Settings extends JDialog {
         }
     }
 
-    private void loginAccount(String account, boolean haveADialogToGetAccount, JSONObject jsonObject, String successText) {
-        if (haveADialogToGetAccount || account == null) account = JOptionPane.showInputDialog(
-                Settings.this,
-                getString("DIALOG_OFFICIAL_LOGIN_TIP_ENTER_ACCOUNT_TEXT"),
-                getString("SETTINGS_BUTTON_OFFICIAL_LOGIN_TEXT"),
-                JOptionPane.QUESTION_MESSAGE
-        );
-        if (!isEmpty(account)) {
-            String password = JOptionPane.showInputDialog(
-                    Settings.this,
-                    getString("DIALOG_OFFICIAL_LOGIN_TIP_ENTER_PASSWORD_TEXT"),
-                    getString("SETTINGS_BUTTON_OFFICIAL_LOGIN_TEXT"),
-                    JOptionPane.QUESTION_MESSAGE
-            );
-            if (!isEmpty(password)) {
-                try {
-                    URL url = new URL("https://authserver.mojang.com/authenticate");
 
-                    JSONObject jsonObject1 = new JSONObject();
-                    jsonObject1.put("requestUser", true);
-                    jsonObject1.put("username", account);
-                    jsonObject1.put("password", password);
-                    JSONObject agentJo = new JSONObject();
-                    agentJo.put("name", "Minecraft");
-                    agentJo.put("version", "1");
-                    jsonObject1.put("agent", agentJo);
-
-                    String post = jsonObject1.toString();
-
-                    byte[] bytes = post.getBytes(UTF_8);
-
-
-                    HttpURLConnection con = (HttpURLConnection) url.openConnection();
-                    con.setUseCaches(false);
-                    con.setConnectTimeout(15000);
-                    con.setReadTimeout(15000);
-                    con.setRequestMethod("POST");
-                    con.setDoOutput(true);
-                    con.setRequestProperty("Content-Type", "application/json;charset=utf-8");
-                    con.setRequestProperty("Content-Length", String.valueOf(bytes.length));
-                    try (OutputStream os = con.getOutputStream()) {
-                        os.write(bytes);
-                    }
-
-                    JSONObject result = null;
-                    try {
-                        result = new JSONObject(httpURLConnection2String(con));
-                    } catch (JSONException exception) {
-                        exception.printStackTrace();
-                    }
-                    if (result != null) {
-                        if (result.has("error") || result.has("errorMessage")) {
-                            String var = result.optString("errorMessage");
-                            if (var.equals("Invalid credentials. Invalid username or password.")) {
-                                JOptionPane.showMessageDialog(Settings.this, getString("DIALOG_OFFICIAL_LOGIN_ERROR_INVALID_AOP_TEXT"), getString("DIALOG_OFFICIAL_LOGIN_FAILED_TITLE"), JOptionPane.ERROR_MESSAGE);
-                            } else {
-                                JOptionPane.showMessageDialog(Settings.this, String.format(getString("DIALOG_OFFICIAL_LOGIN_FAILED_TEXT"), result.optString("error"), var), getString("DIALOG_OFFICIAL_LOGIN_FAILED_TITLE"), JOptionPane.ERROR_MESSAGE);
-                            }
-                        } else {
-                            JSONObject selectedProfileJo = result.optJSONObject("selectedProfile");
-                            JSONObject userJo = result.optJSONObject("user");
-                            if (userJo != null && !isEmpty(userJo.optString("username"))) {
-                                account = userJo.optString("username");
-                            }
-                            jsonObject.put("ol", true);
-                            jsonObject.put("ea", account);
-                            jsonObject.put("at", result.optString("accessToken"));
-                            jsonObject.put("uu", selectedProfileJo.optString("id"));
-                            jsonObject.put("pn", selectedProfileJo.optString("name"));
-                            MCLX.configContent = jsonObject.toString();
-                            try {
-                                FileWriter writer = new FileWriter(configFile, false);
-                                writer.write(jsonObject.toString());
-                                writer.close();
-                            } catch (IOException ex) {
-                                ex.printStackTrace();
-                            }
-                            //((JLabel) playerName).setText(selectedProfileJo.optString("name"));
-                            loadAccount(jsonObject, false);
-
-                            remove(playerName);
-                            playerName = new JLabel();
-                            playerName.setBounds(140, 15, 135, 25);
-                            add(playerName);
-                            ((JLabel) playerName).setText(jsonObject.optString("pn"));
-                            JOptionPane.showMessageDialog(Settings.this, successText, getString("DIALOG_TITLE_NOTICE"), JOptionPane.INFORMATION_MESSAGE);
-
-                        }
-                    } else {
-                        JOptionPane.showMessageDialog(Settings.this, getString("DIALOG_OFFICIAL_LOGIN_FAILED_NORESPONSE_TEXT"), getString("DIALOG_OFFICIAL_LOGIN_FAILED_TITLE"), JOptionPane.ERROR_MESSAGE);
-                    }
-                } catch (Exception ex) {
-                    ex.printStackTrace();
-                    JOptionPane.showMessageDialog(Settings.this, ex, getString("DIALOG_OFFICIAL_LOGIN_FAILED_TITLE"), JOptionPane.ERROR_MESSAGE);
-
-                }
-            }
-        }
-    }
-
-    private File selectSkin(String title) {
+    public static File selectSkin(Component f,String title) {
         int result;
         File file = null;
         JFileChooser fileChooser = new JFileChooser();
@@ -873,7 +767,7 @@ public class Settings extends JDialog {
             }
         });
 
-        result = fileChooser.showDialog(Settings.this, getString("DIALOG_BUTTON_YES_TEXT"));
+        result = fileChooser.showDialog(f, getString("DIALOG_BUTTON_YES_TEXT"));
         if (JFileChooser.APPROVE_OPTION == result) {
             file = fileChooser.getSelectedFile();
         }

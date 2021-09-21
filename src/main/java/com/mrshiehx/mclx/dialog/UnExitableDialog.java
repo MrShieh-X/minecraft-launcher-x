@@ -1,4 +1,4 @@
-package com.mrshiehx.mclx;
+package com.mrshiehx.mclx.dialog;
 
 import javax.swing.*;
 import java.awt.*;

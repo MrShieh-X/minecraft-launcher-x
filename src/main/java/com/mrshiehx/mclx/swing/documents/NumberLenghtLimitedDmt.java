@@ -1,4 +1,4 @@
-package com.mrshiehx.mclx;
+package com.mrshiehx.mclx.swing.documents;
 
 import javax.swing.text.AttributeSet;
 import javax.swing.text.BadLocationException;
@@ -6,7 +6,7 @@ import javax.swing.text.PlainDocument;
 
 public class NumberLenghtLimitedDmt extends PlainDocument {
 
-    private int limit;
+    private final int limit;
     public NumberLenghtLimitedDmt(int limit) {
         super();
         this.limit = limit;

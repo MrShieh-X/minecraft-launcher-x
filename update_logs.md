@@ -1,5 +1,11 @@
 # Update Logs
-Currently, the latest version is 1.2, which was updated on March 10, 2021.
+Currently, the latest version is 1.3, which was updated on September 21, 2021.
+
+## 1.3 (September 21, 2021)
+- Support login to Microsoft account.
+- Support management versions: delete and rename.
+- Optimized the part of obtaining launch arguments.
+- Fixed some issues.
 
 ## 1.2 (Mar. 10, 2021)
 - Fixed the problem that the dialogs may be displayed multiple times.
