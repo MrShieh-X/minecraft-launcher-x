@@ -1,6 +1,6 @@
 # Minecraft Launcher X
 一个 Minecraft Java 版的启动器<br/>
-首次使用，请点击 菜单 - 安装一个新的版本 去安装一个新的版本。<br/>
+首次使用，请点击菜单中的 版本 - 安装一个新的版本 以安装一个新的版本。<br/>
 
 [Click me to go to the README in English](https://github.com/MrShieh-X/minecraft-launcher-x/blob/master/README.md) <br/>
 [点我转到本程序的更新日志](https://github.com/MrShieh-X/minecraft-launcher-x/blob/master/update_logs-zh.md) <br/>
