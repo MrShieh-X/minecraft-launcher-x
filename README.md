@@ -1,6 +1,6 @@
 # Minecraft Launcher X
 A Launcher of Minecraft Java Edition<br/>
-For the first use, please click Menu - Install a New Version to install a new version.<br/>
+For the first use, please click Version - Install a New Version in menu to install a new version.<br/>
 
 [点我转到中文的README页面](https://github.com/MrShieh-X/minecraft-launcher-x/blob/master/README-zh.md) <br/>
 [Click me to go to the update log of this program](https://github.com/MrShieh-X/minecraft-launcher-x/blob/master/update_logs.md) <br/>
