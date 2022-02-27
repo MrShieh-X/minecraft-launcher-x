@@ -1,6 +1,6 @@
 package com.mrshiehx.mclx.utils;
 
-import javafx.util.Pair;
+import com.mrshiehx.mclx.bean.Pair;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URI;

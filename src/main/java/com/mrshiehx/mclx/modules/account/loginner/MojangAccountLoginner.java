@@ -82,15 +82,15 @@ public class MojangAccountLoginner {
                             if (userJo != null && !isEmpty(userJo.optString("username"))) {
                                 account = userJo.optString("username");
                             }
-                            jsonObject.put("lm", 1);
+                            jsonObject.put("loginMethod", 1);
                             jsonObject.put("ea", account);
-                            jsonObject.put("at", result.optString("accessToken"));
-                            jsonObject.put("uu", selectedProfileJo.optString("id"));
-                            jsonObject.put("pn", selectedProfileJo.optString("name"));
+                            jsonObject.put("accessToken", result.optString("accessToken"));
+                            jsonObject.put("uuid", selectedProfileJo.optString("id"));
+                            jsonObject.put("playerName", selectedProfileJo.optString("name"));
                             MinecraftLauncherX.configContent = jsonObject.toString();
                             try {
                                 FileWriter writer = new FileWriter(Settings.configFile, false);
-                                writer.write(jsonObject.toString());
+                                writer.write(jsonObject.toString(Settings.INDENT_FACTOR));
                                 writer.close();
                             } catch (IOException ex) {
                                 ex.printStackTrace();
@@ -102,7 +102,7 @@ public class MojangAccountLoginner {
                             frame.playerName = new JLabel();
                             frame.playerName.setBounds(140, 15, 135, 25);
                             frame.add(frame.playerName);
-                            ((JLabel) frame.playerName).setText(jsonObject.optString("pn"));
+                            ((JLabel) frame.playerName).setText(jsonObject.optString("playerName"));
                             JOptionPane.showMessageDialog(frame, successText, getString("DIALOG_TITLE_NOTICE"), JOptionPane.INFORMATION_MESSAGE);
 
                         }

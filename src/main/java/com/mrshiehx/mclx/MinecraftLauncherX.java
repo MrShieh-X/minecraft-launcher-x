@@ -1,34 +1,54 @@
 package com.mrshiehx.mclx;
 
+import com.mrshiehx.mclx.bean.Library;
+import com.mrshiehx.mclx.dialog.UnExitableDialog;
+import com.mrshiehx.mclx.enums.GameCrashError;
+import com.mrshiehx.mclx.exceptions.EmptyNativesException;
+import com.mrshiehx.mclx.exceptions.LaunchException;
+import com.mrshiehx.mclx.exceptions.LibraryDefectException;
+import com.mrshiehx.mclx.modules.MinecraftLauncher;
+import com.mrshiehx.mclx.modules.version.NativesReDownloader;
 import com.mrshiehx.mclx.modules.version.VersionInstaller;
 import com.mrshiehx.mclx.settings.Settings;
+import com.mrshiehx.mclx.utils.OperatingSystem;
+import com.mrshiehx.mclx.utils.SwingUtils;
 import com.mrshiehx.mclx.utils.Utils;
 import com.mrshiehx.mclx.modules.version.VersionsManager;
+import org.jetbrains.annotations.Nullable;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.swing.*;
+import javax.swing.event.MenuEvent;
+import javax.swing.event.MenuListener;
 import javax.swing.text.Document;
 import java.awt.*;
 import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.io.*;
+import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 import static com.mrshiehx.mclx.modules.MinecraftLauncher.*;
+import static com.mrshiehx.mclx.utils.DownloadDialog.*;
+import static com.mrshiehx.mclx.utils.Utils.readFileContent;
+
 public class MinecraftLauncherX {
     public static final String CLIENT_ID = "bcb89757-1625-4561-8bc6-34d04a11a07f";
+    private static final String MCLX_COPYRIGHT = "Copyright \u00a9 2022 MrShiehX";
     public static File gameDir;
     public static File assetsDir;
     public static File respackDir;
-    public static File datapackDir;
     public static File smDir;
     public static File versionsDir;
     static JMenuBar menuBar;
@@ -42,34 +62,49 @@ public class MinecraftLauncherX {
     public static String configContent = "";
     public static String javaPath = "";
 
-    public static String MCLX_VERSION = "1.3";
+    public static String MCLX_VERSION = "1.4";
 
-    public static ImageIcon icon = new ImageIcon(MinecraftLauncherX.class.getResource("/icon.png"));
+    public static final ImageIcon icon;
 
     private static JSONObject enUSText;
     private static JSONObject zhCNText;
 
     static String language;
 
+    static {
+        URL url = MinecraftLauncherX.class.getResource("/icon.png");
+        if (url != null) icon = new ImageIcon(url);
+        else icon = null;
+
+        if (OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
+            System.setProperty("apple.awt.UIElement", "true");
+        }
+    }
+
     public static void main(String[] args) {
+        JSONObject startConfig = initConfig();
         try {
             UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
         } catch (Exception ignore) {
         }
         JFrame frame = new JFrame(getString("APPLICATION_SHORT_NAME"));
-        if(icon!=null)frame.setIconImage(icon.getImage());
-        frame.setBounds(500, 250, 420, 350);
-        Toolkit kit = Toolkit.getDefaultToolkit();
-        Dimension screenSize = kit.getScreenSize();
-        int screenWidth = screenSize.width / 2;
+        if (icon != null) {
+            frame.setIconImage(icon.getImage());
+        }
+        int frameWidth=630;
+        int frameHeight=525;
+        Point framePoint=SwingUtils.getCenterLocation(frameWidth,frameHeight);
+        frame.setBounds(framePoint.x, framePoint.y, frameWidth, frameHeight);
+        //Toolkit kit = Toolkit.getDefaultToolkit();
+        //Dimension screenSize = kit.getScreenSize();
+        /*int screenWidth = screenSize.width / 2;
         int screenHeight = screenSize.height / 2;
         int height = frame.getHeight();
-        int width = frame.getWidth();
-        frame.setLocation(screenWidth - width / 2, screenHeight - height / 2);
+        int width = frame.getWidth();*/
+        //frame.setLocation(screenWidth - width / 2, screenHeight - height / 2);
         frame.setLayout(null);
         frame.setLocationRelativeTo(null);
         frame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-
         menuBar = new JMenuBar();
         startGame = new JButton(getString("BUTTON_START_NAME"));
         versionChooser = new JComboBox<>();
@@ -97,7 +132,11 @@ public class MinecraftLauncherX {
         aboutMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JOptionPane.showMessageDialog(frame, getString("DIALOG_ABOUT_DESCRIPTION"), getString("MENU_ABOUT_NAME"), JOptionPane.INFORMATION_MESSAGE, new ImageIcon(icon.getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT)));
+                ImageIcon icon2 = null;
+                if (icon != null) {
+                    icon2 = new ImageIcon(icon.getImage().getScaledInstance(50, 50, Image.SCALE_DEFAULT));
+                }
+                JOptionPane.showMessageDialog(frame, String.format(getString("DIALOG_ABOUT_DESCRIPTION"), MCLX_VERSION, MCLX_COPYRIGHT), getString("MENU_ABOUT_NAME"), JOptionPane.INFORMATION_MESSAGE, icon2);
             }
         });
         exitMenu.addActionListener(e -> System.exit(0));
@@ -120,8 +159,9 @@ public class MinecraftLauncherX {
             }
         });
 
-        gameMenu.addMouseListener(new MouseListener() {
-            public void mouseClicked(MouseEvent e) {
+        gameMenu.addMenuListener(new MenuListener() {
+            @Override
+            public void menuSelected(MenuEvent e) {
                 if (runningMc != null) {
                     killMc.setEnabled(runningMc.isAlive());
                 } else {
@@ -131,28 +171,23 @@ public class MinecraftLauncherX {
                 copyCommand.setEnabled(versionChooser.getModel().getSelectedItem() != null);
             }
 
-            public void mousePressed(MouseEvent e) {
+            @Override
+            public void menuDeselected(MenuEvent e) {
 
             }
 
-            public void mouseReleased(MouseEvent e) {
-
-            }
-
-            public void mouseEntered(MouseEvent e) {
-
-            }
-
-            public void mouseExited(MouseEvent e) {
+            @Override
+            public void menuCanceled(MenuEvent e) {
 
             }
         });
+
 
         copyCommand.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 try {
-                    configContent = readFileContent(configFile);
+                    configContent = Utils.readFileContent(configFile);
                 } catch (IOException exception) {
                     exception.printStackTrace();
                     JOptionPane.showMessageDialog(frame, exception, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
@@ -180,17 +215,42 @@ public class MinecraftLauncherX {
                     }
                 } else {
                     String selected = (String) versionChooser.getSelectedItem();
-                    File versionsFolder = addTo(gameDir, "versions");
-                    File versionFolder = addTo(versionsFolder, selected);
-                    File versionJarFile = addTo(versionFolder, selected + ".jar");
-                    File versionJsonFile = addTo(versionFolder, selected + ".json");
+                    File versionsFolder = new File(gameDir, "versions");
+                    File versionFolder = new File(versionsFolder, selected);
+                    File versionJarFile = new File(versionFolder, selected + ".jar");
+                    File versionJsonFile = new File(versionFolder, selected + ".json");
                     try {
-                        String at="0",uu="0";
-                        if(jsonObject.optInt("lm")>0){
-                            at=jsonObject.optString("at", "0");
-                            uu=jsonObject.optString("uu", "0");
+                        String at = "0", uu = null;
+                        if (jsonObject.optInt("loginMethod") > 0) {
+                            at = jsonObject.optString("accessToken", "0");
+                            uu = jsonObject.optString("uuid", null);
                         }
-                        copyText((String) launchMinecraft(versionJarFile, versionJsonFile, gameDir, assetsDir, respackDir, datapackDir, jsonObject.optBoolean("ls"), smDir, jsonObject.optString("pn", "XPlayer"), jsonObject.optString("jp"), jsonObject.optInt("mm", 1024), 128, jsonObject.optInt("ww", 854), jsonObject.optInt("wh", 480), jsonObject.optBoolean("fs"), at,uu, LAUNCH_MODE_GET_COMMAND,log,false,!jsonObject.optBoolean("fs")));
+                        copyText(getMinecraftLaunchCommand(versionJarFile,
+                                versionJsonFile,
+                                gameDir,
+                                assetsDir,
+                                respackDir,
+                                jsonObject.optString("playerName", "XPlayer"),
+                                jsonObject.optString("javaPath", Utils.getDefaultJavaPath()),
+                                jsonObject.optInt("maxMemory", 1024),
+                                128,
+                                jsonObject.optInt("windowSizeWidth", 854),
+                                jsonObject.optInt("windowSizeHeight", 480),
+                                jsonObject.optBoolean("isFullscreen"),
+                                at,
+                                uu,
+                                false,
+                                !jsonObject.optBoolean("isFullscreen")));
+                    } catch (EmptyNativesException ex) {
+                        ex.printStackTrace();
+                        int se=JOptionPane.showConfirmDialog(frame,getString("DIALOG_NOT_FOUND_NATIVES_MESSAGE"),getString("DIALOG_TITLE_NOTICE"),JOptionPane.YES_NO_OPTION,JOptionPane.ERROR_MESSAGE,null);
+                        if(se==JOptionPane.YES_OPTION)NativesReDownloader.reDownload(frame,versionFolder,ex.libraries);
+                    }  catch (LibraryDefectException ex) {
+                        ex.printStackTrace();
+                        defectLibrary(frame, ex.list);
+                    } catch (LaunchException ex) {
+                        ex.printStackTrace();
+                        JOptionPane.showMessageDialog(frame, ex.getMessage(), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                     } catch (Exception ex) {
                         ex.printStackTrace();
                         JOptionPane.showMessageDialog(frame, ex, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
@@ -203,7 +263,7 @@ public class MinecraftLauncherX {
         manageMenu.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                VersionsManager.showDialog(frame,versionsDir);
+                VersionsManager.showDialog(frame, versionsDir);
             }
         });
 
@@ -221,66 +281,24 @@ public class MinecraftLauncherX {
 
         frame.setResizable(false);
 
-        versionChooser.setBounds(10, 10, 200, 30);
-        startGame.setBounds(220, 10, 175, 30);
+        //versionChooser:startGame 8:7
+        versionChooser.setBounds(10, 10, /*200*//*250*/(frameWidth-50)/2, 30);
+        startGame.setBounds(20+(frameWidth-50)/2, 10, /*175*//*220*/(frameWidth-50)/2+5, 30);
         startGame.setFont(new Font(null, Font.BOLD, 17));
         versionChooser.setFont(new Font(null, Font.PLAIN, 15));
-        log.setBounds(10, 50, 385, 230);
+        log.setBounds(10, 50, 594, 402);
         log.setEditable(false);
-        log.setFont(new Font(null, Font.PLAIN, 12));
+        log.setFont(new Font(null, Font.BOLD, 12));
         log.setLineWrap(true);
         log.setWrapStyleWord(true);
 
         JScrollPane jsp = new JScrollPane(log);
-        jsp.setBounds(10, 50, 385, 230);
+        jsp.setBounds(10, 50, 594, 402);
         jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
-
 
         frame.add(startGame);
         frame.add(versionChooser);
         frame.add(jsp);
-
-        if (configFile.exists()) {
-            try {
-                configContent = readFileContent(configFile);
-                JSONObject jsonObject = new JSONObject();
-                try {
-                    jsonObject = new JSONObject(configContent);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-                javaPath = jsonObject.optString("jp");
-                if (jsonObject.optBoolean("cw")) {
-
-                    gameDir = new File(!isEmpty(jsonObject.optString("gd")) ? jsonObject.optString("gd") : ".minecraft");
-                    assetsDir = !isEmpty(jsonObject.optString("ad")) ? new File(jsonObject.optString("ad")) : new File(gameDir, "assets");
-                    respackDir = !isEmpty(jsonObject.optString("rd")) ? new File(jsonObject.optString("rd")) : new File(gameDir, "resourcepacks");
-                    datapackDir = !isEmpty(jsonObject.optString("dd")) ? new File(jsonObject.optString("dd")) : new File(gameDir, "datapacks");
-                    smDir = !isEmpty(jsonObject.optString("sd")) ? new File(jsonObject.optString("sd")) : new File(gameDir, "simplemods");
-
-                } else {
-                    initDefaultDirs();
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        } else {
-            initDefaultDirs();
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("pn", "XPlayer");
-            jsonObject.put("mm", 1024);
-            jsonObject.put("ww", 854);
-            jsonObject.put("wh", 480);
-            configContent = jsonObject.toString();
-            try {
-                configFile.createNewFile();
-                FileWriter writer = new FileWriter(configFile, false);
-                writer.write(jsonObject.toString());
-                writer.close();
-            } catch (IOException E) {
-                E.printStackTrace();
-            }
-        }
 
 
         startGame.addActionListener(new ActionListener() {
@@ -288,7 +306,7 @@ public class MinecraftLauncherX {
             public void actionPerformed(ActionEvent e) {
                 if (versionChooser.getModel().getSelectedItem() != null) {
                     try {
-                        configContent = readFileContent(configFile);
+                        configContent = Utils.readFileContent(configFile);
                     } catch (IOException exception) {
                         exception.printStackTrace();
                         JOptionPane.showMessageDialog(frame, exception, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
@@ -316,25 +334,48 @@ public class MinecraftLauncherX {
                         }
                     } else {
                         String selected = (String) versionChooser.getSelectedItem();
-                        File versionsFolder = addTo(gameDir, "versions");
-                        File versionFolder = addTo(versionsFolder, selected);
-                        File versionJarFile = addTo(versionFolder, selected + ".jar");
-                        File versionJsonFile = addTo(versionFolder, selected + ".json");
+                        File versionsFolder = new File(gameDir, "versions");
+                        File versionFolder = new File(versionsFolder, selected);
+                        File versionJarFile = new File(versionFolder, selected + ".jar");
+                        File versionJsonFile = new File(versionFolder, selected + ".json");
                         try {
-                            String at="0",uu="0";
-                            if(jsonObject.optInt("lm")>0){
-                                at=jsonObject.optString("at", "0");
-                                uu=jsonObject.optString("uu", "0");
+                            String at = "0", uu = null;
+                            if (jsonObject.optInt("loginMethod") > 0) {
+                                at = jsonObject.optString("accessToken", "0");
+                                uu = jsonObject.optString("uuid", null);
                             }
-                            runningMc = (Process) launchMinecraft(versionJarFile, versionJsonFile, gameDir, assetsDir, respackDir, datapackDir, jsonObject.optBoolean("ls"), smDir, jsonObject.optString("pn", "XPlayer"), jsonObject.optString("jp"), jsonObject.optInt("mm", 1024), 128, jsonObject.optInt("ww", 854), jsonObject.optInt("wh", 480), jsonObject.optBoolean("fs"), at,uu, LAUNCH_MODE_EXECUTE,log,false,!jsonObject.optBoolean("fs"));
+                            runningMc = launchMinecraft(
+                                    versionJarFile,
+                                    versionJsonFile,
+                                    gameDir,
+                                    assetsDir,
+                                    respackDir,
+                                    jsonObject.optString("playerName", "XPlayer"),
+                                    jsonObject.optString("javaPath", Utils.getDefaultJavaPath()),
+                                    jsonObject.optInt("maxMemory", 1024),
+                                    128,
+                                    jsonObject.optInt("windowSizeWidth", 854),
+                                    jsonObject.optInt("windowSizeHeight", 480),
+                                    jsonObject.optBoolean("isFullscreen"),
+                                    at,
+                                    uu,
+                                    log,
+                                    false,
+                                    !jsonObject.optBoolean("isFullscreen"));
+                            startGame.setEnabled(false);
+                            versionChooser.setEnabled(false);
 
+                            final GameCrashError[] crashError = {null};
                             new Thread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    DataInputStream dis = new DataInputStream(runningMc.getInputStream());
+                                    BufferedReader dis = new BufferedReader(new InputStreamReader(runningMc.getInputStream()));
                                     String line;
                                     try {
                                         while ((line = dis.readLine()) != null) {
+                                            if(line.contains("cannot be cast to class java.net.URLClassLoader")) crashError[0] =GameCrashError.URLClassLoader;//旧版本Minecraft的Java版本过高问题，报Exception in thread "main" java.lang.ClassCastException: class jdk.internal.loader.ClassLoaders$AppClassLoader cannot be cast to class java.net.URLClassLoader，因为在Java9对相关代码进行了修改，所以要用Java8及更旧
+                                            else if(line.contains("Failed to load a library. Possible solutions:")) crashError[0] =GameCrashError.LWJGLFailedLoad;
+                                            else if(line.contains("java.lang.OutOfMemoryError: Java heap space")||line.contains("Too small maximum heap"))crashError[0]=GameCrashError.MemoryTooSmall;
                                             //Log.d("result", line);
                                             //result += line;
                                             log.setText(log.getText() + line + "\n");
@@ -351,18 +392,46 @@ public class MinecraftLauncherX {
                                 public void run() {
                                     try {
                                         runningMc.waitFor();
+                                        startGame.setEnabled(true);
+                                        versionChooser.setEnabled(true);
                                         log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
+                                        if(crashError[0] !=null){
+                                            log.setText(log.getText() +"\n\n"+String.format(getString("MESSAGE_GAME_CRASH_CAUSE_TIPS"),crashError[0].cause));
+                                        }
+                                        Document doc = log.getDocument();
+                                        log.setCaretPosition(doc.getLength());
                                     } catch (InterruptedException interruptedException) {
                                         interruptedException.printStackTrace();
                                     }
                                 }
                             }).start();
+                        } catch (EmptyNativesException ex) {
+                            ex.printStackTrace();
+                            int se=JOptionPane.showConfirmDialog(frame,getString("DIALOG_NOT_FOUND_NATIVES_MESSAGE"),getString("DIALOG_TITLE_NOTICE"),JOptionPane.YES_NO_OPTION,JOptionPane.ERROR_MESSAGE,null);
+                            if(se==JOptionPane.YES_OPTION)NativesReDownloader.reDownload(frame,versionFolder,ex.libraries);
+                            startGame.setEnabled(true);
+                            versionChooser.setEnabled(true);
+                            log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
+                        }  catch (LibraryDefectException ex) {
+                            ex.printStackTrace();
+                            defectLibrary(frame, ex.list);
+                            startGame.setEnabled(true);
+                            versionChooser.setEnabled(true);
+                            log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
+                        } catch (LaunchException ex) {
+                            ex.printStackTrace();
+                            JOptionPane.showMessageDialog(frame, ex.getMessage(), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+                            startGame.setEnabled(true);
+                            versionChooser.setEnabled(true);
+                            log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
                         } catch (Exception ex) {
                             ex.printStackTrace();
                             JOptionPane.showMessageDialog(frame, ex, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+                            startGame.setEnabled(true);
+                            log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
                         }
                     }
-                }else{
+                } else {
                     startGame.setEnabled(false);
                 }
             }
@@ -404,18 +473,219 @@ public class MinecraftLauncherX {
         }*/
         versionsDir = new File(gameDir/*.getAbsolutePath() + "/" +*/, "versions");
 
-        updateVersions();
+        updateVersions(startConfig);
 
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setVisible(true);
     }
 
-    public static void updateVersions() {
+    private static void defectLibrary(JFrame frame, List<Library> list) {
+        Object[] options = {getString("DIALOG_SOME_LIBRARIES_NOT_FOUND_SEE"), getString("DIALOG_BUTTON_CANCEL_TEXT"), getString("DIALOG_SOME_LIBRARIES_NOT_FOUND_DOWNLOAD")};
+
+        int select = JOptionPane.showOptionDialog(frame,
+                getString("DIALOG_SOME_LIBRARIES_NOT_FOUND_MESSAGE"),
+                getString("DIALOG_TITLE_NOTICE"),
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.ERROR_MESSAGE,
+                null,
+                options,
+                options[2]);
+        if (select == 0) {
+            JTextArea label = new JTextArea();
+            label.setEditable(false);
+
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < list.size(); i++) {
+                String s = list.get(i).libraryJSONObject().optString("name");
+                sb.append(s);
+                if (i + 1 != list.size()) {
+                    sb.append('\n');
+                }
+            }
+            label.setText(sb.toString());
+            label.setBounds(10, 40, 215, 70);
+            label.setEditable(false);
+            label.setFont(new Font(null, Font.PLAIN, 12));
+            JScrollPane jsp = new JScrollPane(label);
+            jsp.setBounds(10, 40, 215, 70);
+            //jsp.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_ALWAYS);
+            JDialog dialog = new JDialog(frame, true);
+            dialog.setTitle(getString("DIALOG_SOME_LIBRARIES_NOT_FOUND_SEE_TITLE"));
+            int width = 500;
+            int height = 400;
+            Point point = SwingUtils.getCenterLocation(width, height);
+            dialog.setBounds(point.x, point.y, width, height);
+            dialog.setMaximumSize(new Dimension(700, 560));
+            dialog.setMinimumSize(new Dimension(width, height));
+            dialog.add(jsp);
+            dialog.setVisible(true);
+            defectLibrary(frame, list);
+        } else if (select == 2) {
+            JProgressBar progressBar = createProgressBar();
+            JTextArea textArea = createTextArea();
+            UnExitableDialog dialog = createDownloadDialog(frame, progressBar, textArea,getString("DIALOG_DOWNLOAD_LIBRARIES"));
+            dialog.addComponentListener(new ComponentAdapter() {
+                @Override
+                public void componentShown(ComponentEvent e) {
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try {
+                                //downloadFile(url, jarFile, progressBar);
+                                File librariesDir = new File(gameDir, "libraries");
+                                //System.out.println(assetsDir.getAbsolutePath());
+                                //System.out.println(assetsDir.getAbsolutePath());
+                                librariesDir.mkdirs();
+
+                                addLog("DownloadDefectLibrary",textArea, getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES"));
+                                if (list != null) {
+                                    for (Library library : list) {
+                                        JSONObject jsonObject = library.libraryJSONObject();
+                                        if (jsonObject != null) {
+                                            boolean meet = true;
+                                            JSONArray rules = jsonObject.optJSONArray("rules");
+                                            if (rules != null) {
+                                                meet = MinecraftLauncher.isMeetConditions(rules, false, false);
+                                            }
+                                            //System.out.println(meet);
+
+                                            JSONObject downloadsJo = jsonObject.optJSONObject("downloads");
+                                            if (meet && downloadsJo != null) {
+                                                JSONObject artifactJo = downloadsJo.optJSONObject("artifact");
+                                                if (artifactJo != null) {
+                                                    String path = artifactJo.optString("path");
+                                                    String url = artifactJo.optString("url");
+                                                    if (!isEmpty(path) && !isEmpty(url)) {
+                                                        try {
+                                                            File file = new File(librariesDir, path);
+                                                            file.getParentFile().mkdirs();
+                                                            if (!file.exists()) {
+                                                                file.createNewFile();
+                                                            }
+                                                            if (file.length() == 0) {
+                                                                String text=String.format(getString("MESSAGE_DOWNLOADING_FILE"), url.substring(url.lastIndexOf("/")+1));
+                                                                //print("DownloadDefectLibrary",text);
+                                                                addLog("DownloadDefectLibrary",textArea, text);
+                                                                downloadFile(url, file, progressBar);
+                                                            }
+                                                        } catch (Exception e) {
+                                                            e.printStackTrace();
+                                                            addLog("DownloadDefectLibrary",textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARY"), url, e));
+                                                        }
+                                                    }
+                                                }
+
+
+                                            }
+                                        }
+                                    }
+                                    addLog("DownloadDefectLibrary",textArea, getString("MESSAGE_INSTALL_DOWNLOADED_LIBRARIES"));
+                                } else {
+                                    addLog("DownloadDefectLibrary",textArea, getString("MESSAGE_INSTALL_LIBRARIES_LIST_EMPTY"));
+                                }
+
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                                addLog("DownloadDefectLibrary",textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARIES"), e));
+                                JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARIES"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+                            }
+                            progressBar.setValue(progressBar.getMaximum());
+                            dialog.setExitable(true);
+                            //dialog.dispose();
+                        }
+                    }).start();
+                }
+            });
+            dialog.setVisible(true);
+
+        }
+    }
+
+    private static JSONObject initConfig() {
+        if (configFile.exists()) {
+            try {
+                configContent = Utils.readFileContent(configFile);
+                JSONObject jsonObject = new JSONObject();
+                try {
+                    jsonObject = new JSONObject(configContent);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+                javaPath = jsonObject.optString("javaPath");
+                if (jsonObject.optBoolean("customWorkPaths")) {
+
+                    gameDir = new File(!isEmpty(jsonObject.optString("gameDir")) ? jsonObject.optString("gameDir") : ".minecraft");
+                    assetsDir = !isEmpty(jsonObject.optString("assetsDir")) ? new File(jsonObject.optString("assetsDir")) : new File(gameDir, "assets");
+                    respackDir = !isEmpty(jsonObject.optString("resourcesDir")) ? new File(jsonObject.optString("resourcesDir")) : new File(gameDir, "resourcepacks");
+                    //datapackDir = !isEmpty(jsonObject.optString("dataDir")) ? new File(jsonObject.optString("dataDir")) : new File(gameDir, "datapacks");
+                    smDir = !isEmpty(jsonObject.optString("simpleModsDir")) ? new File(jsonObject.optString("simpleModsDir")) : new File(gameDir, "simplemods");
+
+                } else {
+                    initDefaultDirs();
+                }
+                return jsonObject;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else {
+            initDefaultDirs();
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("language", Locale.getDefault().getLanguage());
+            jsonObject.put("playerName", "XPlayer");
+            jsonObject.put("javaPath", javaPath = Utils.getDefaultJavaPath());
+            jsonObject.put("maxMemory", 1024);
+            jsonObject.put("windowSizeWidth", 854);
+            jsonObject.put("windowSizeHeight", 480);
+            configContent = jsonObject.toString();
+            try {
+                configFile.createNewFile();
+                FileWriter writer = new FileWriter(configFile, false);
+                writer.write(jsonObject.toString(Settings.INDENT_FACTOR));
+                writer.close();
+            } catch (IOException E) {
+                E.printStackTrace();
+            }
+            return jsonObject;
+        }
+        return null;
+    }
+
+    public static void updateVersions(JSONObject config) {
         String[] strArray = Utils.listVersions(versionsDir);
         ComboBoxModel<String> spinnerListModel = new DefaultComboBoxModel<>(strArray);
         versionChooser.setModel(spinnerListModel);
-        startGame.setEnabled(versionChooser.getSelectedItem()!=null);
-        versionChooser.addItemListener(e -> startGame.setEnabled(versionChooser.getSelectedItem()!=null));
+        startGame.setEnabled(versionChooser.getSelectedItem() != null);
+        versionChooser.addItemListener(e -> {
+            boolean notnul = versionChooser.getSelectedItem() != null;
+            startGame.setEnabled(notnul);
+            JSONObject jsonObject;
+            try {
+                jsonObject = new JSONObject(configContent);
+            } catch (Exception e3) {
+                e3.printStackTrace();
+                jsonObject = new JSONObject();
+            }
+            jsonObject.put("selectedVersion", notnul ? String.valueOf(versionChooser.getSelectedItem()) : "");
+            Utils.saveConfig(jsonObject);
+        });
+        if (config == null) {
+            config = Utils.getConfig();
+        }
+        String sv = config.optString("selectedVersion");
+        boolean did = false;
+        if (!Utils.isEmpty(sv)) {
+            for (int i = 0; i < strArray.length; i++) {
+                if (sv.equals(strArray[i])) {
+                    did = true;
+                    versionChooser.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+        if (!did) {
+            config.put("selectedVersion", versionChooser.getSelectedItem() != null ? String.valueOf(versionChooser.getSelectedItem()) : "");
+            Utils.saveConfig(config);
+        }
     }
 
 
@@ -423,75 +693,12 @@ public class MinecraftLauncherX {
         gameDir = new File(".minecraft");
         assetsDir = new File(gameDir, "assets");
         respackDir = new File(gameDir, "resourcepacks");
-        datapackDir = new File(gameDir, "datapacks");
+        //datapackDir = new File(gameDir, "datapacks");
         smDir = new File(gameDir, "simplemods");
         versionsDir = new File(gameDir, "versions");
     }
 
-    public static boolean isWindows() {
-        return File.separator.equals("\\")
-                || File.separatorChar == '\\'
-                ||/*AccessController.doPrivileged(OSInfo.getOSTypeAction()) == OSInfo.OSType.WINDOWS*/System.getProperty("os.name").toLowerCase().contains("windows");
-    }
 
-
-    public static String addShuangyinhaoToPath(String path) {
-        if (path.startsWith("\"")) {
-            if (!path.endsWith("\"")) {
-                path = path + "\"";
-            }
-        } else if (path.endsWith("\"")) {
-            if (!path.startsWith("\"")) {
-                path = "\"" + path;
-            }
-        } else {
-            path = "\"" + path + "\"";
-        }
-        return path.replace("\\", "\\\\");
-    }
-
-    public static String addSeparatorToPath(String path) {
-        String separator = getFileSeparator(path);
-        if (!path.endsWith(separator)) {
-            path = path + separator;
-        }
-        return path;
-    }
-
-
-    public static String readFileContent(File file) throws IOException {
-        BufferedReader reader;
-        StringBuilder sbf = new StringBuilder();
-        reader = new BufferedReader(new FileReader(file));
-        String tempStr;
-        while ((tempStr = reader.readLine()) != null) {
-            sbf.append(tempStr);
-        }
-        reader.close();
-        return sbf.toString();
-    }
-
-    public static boolean hasWindowsFileSeparator(String path) {
-        return path.contains("\\");
-    }
-
-    public static File addTo(File startFile, String needToAddNoSeparatorStart) {
-        /*String path = startFile.getAbsolutePath();
-        String separator = "/";
-        if (hasWindowsFileSeparator(path)) {
-            separator = "\\";
-        }
-        if (path.endsWith(separator)) {
-            return new File(path + needToAddNoSeparatorStart);
-        } else {
-            return new File(path + separator + needToAddNoSeparatorStart);
-        }*/
-        return new File(startFile, needToAddNoSeparatorStart);
-    }
-
-    public static String getFileSeparator(String path) {
-        return hasWindowsFileSeparator(path) ? "\\" : "/";
-    }
 
     public static int numberOfAStringStartInteger(String target) {
         int r = 0;
@@ -517,7 +724,7 @@ public class MinecraftLauncherX {
         fileOutputStream.close();
     }
 
-    public static void downloadFile(String urla, File to, JProgressBar progressBar) throws IOException {
+    public static void downloadFile(String urla, File to, @Nullable JProgressBar progressBar) throws IOException {
         URL url = new URL(urla);
         HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
         int completeFileSize = httpConnection.getContentLength();
@@ -556,9 +763,46 @@ public class MinecraftLauncherX {
         in.close();
     }
 
-    public static String showInputNameDialog(Component parent, String defaultName) {
-        return showInputNameDialog(parent, defaultName,getString("MESSAGE_INSTALL_INPUT_NAME"));
-    }
+    /*public static void downloadFile(String urla, File to, @Nullable JProgressBar progressBar, @Nullable JTextArea textArea) throws IOException {
+        URL url = new URL(urla);
+        HttpURLConnection httpConnection = (HttpURLConnection) (url.openConnection());
+        int completeFileSize = httpConnection.getContentLength();
+        if (progressBar != null)
+            progressBar.setMaximum(completeFileSize);
+
+        BufferedInputStream in = new java.io.BufferedInputStream(httpConnection.getInputStream());
+        FileOutputStream fos = new java.io.FileOutputStream(to);
+        BufferedOutputStream bout = new BufferedOutputStream(
+                fos, 1024);
+        if (progressBar != null)
+            progressBar.setMaximum(100);
+        byte[] data = new byte[1024];
+        long downloadedFileSize = 0;
+        int x = 0;
+        while ((x = in.read(data, 0, 1024)) >= 0) {
+            downloadedFileSize += x;
+
+            // calculate progress
+            final int currentProgress = (int) ((((double) downloadedFileSize) / ((double) completeFileSize)) * 100d);
+
+            // update progress bar
+            if (progressBar != null)
+                SwingUtilities.invokeLater(new Runnable() {
+                    @Override
+                    public void run() {
+                        progressBar.setValue(currentProgress);
+                    }
+                });
+            bout.write(data, 0, x);
+        }
+        if (progressBar != null)
+            progressBar.setValue(0);
+        bout.close();
+        fos.close();
+        in.close();
+    }*/
+
+
     public static String showInputNameDialog(Component parent, String defaultName, String message) {
         String ret = (String) JOptionPane.showInputDialog(parent, message, getString("MENU_INSTALL_NEW_VERSION"), JOptionPane.QUESTION_MESSAGE, null, null, defaultName);
         if (ret != null) {
@@ -582,9 +826,11 @@ public class MinecraftLauncherX {
     }
 
 
-    public static void addLog(JTextArea textArea, String message) {
+    public static void addLog(String moduleName,JTextArea textArea, String message) {
+        print(moduleName,message);
         if (textArea != null) {
-            textArea.setText(textArea.getText() + message + "\n");
+            textArea.setText(textArea.getText() + "["+ new SimpleDateFormat("HH:mm:ss").format(new Date())+"]"+message + "\n");
+
             Document doc = textArea.getDocument();
             textArea.setCaretPosition(doc.getLength());
         }
@@ -704,11 +950,26 @@ public class MinecraftLauncherX {
             }
         }
 
-        return enUSText.optString(name);
+        return enUSText.optString(name, name);
     }
 
     public static String getLanguage() {
-        if (isEmpty(language)) language = Locale.getDefault().getLanguage();
+        if (isEmpty(language)) {
+            JSONObject jsonObject;
+            try {
+                jsonObject = new JSONObject(configContent);
+            } catch (Exception e) {
+                e.printStackTrace();
+                jsonObject = new JSONObject();
+            }
+            String lang = jsonObject.optString("language");
+            if (isEmpty(lang)) {
+                jsonObject.put("language", language = Locale.getDefault().getLanguage());
+                Utils.saveConfig(jsonObject);
+            } else {
+                language = lang;
+            }
+        }
         return language;
     }
 
@@ -720,6 +981,21 @@ public class MinecraftLauncherX {
 
     public static void errorDialog(Component frame, String message, String titleIfEmptyNotice) {
         JOptionPane.showMessageDialog(frame, message, titleIfEmptyNotice != null ? titleIfEmptyNotice : getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+    }
+
+    public static void print(Class<?>clazz,String content){
+        print(clazz.getSimpleName(),content);
+    }
+    public static void print(String moduleName,String content){
+        String base="[%s|%s]%s\n";
+
+        Date now = new Date(); // 创建一个Date对象，获取当前时间
+        // 指定格式化格式
+        SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss");
+        String time=f.format(now);
+
+
+        System.out.printf(base,time,moduleName,content);
     }
 
 }

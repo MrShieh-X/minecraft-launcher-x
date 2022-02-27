@@ -7,30 +7,24 @@ For the first use, please click Version - Install a New Version in menu to insta
 
 ## Copyright
 MrShiehX own this program's copyright.<br/>
-Anyone can take advices of this program to us.
+Anyone can take advices of this program to me.
 
 ## Version
 The latest version: <br/>
-<b>1.3 (September 21, 2021)</b><br/>
+<b>1.4 (February 27, 2022)</b><br/>
 Historical version: <br/>
+<b>1.4 (February 27, 2022)</b><br/>
 <b>1.3 (September 21, 2021)</b><br/>
 <b>1.2 (Mar. 10, 2021)</b><br/>
 <b>1.1 (Mar. 5, 2021)</b><br/>
 <b>1.0 (Feb. 16, 2021) (First version)</b><br/>
 
 ## The software configuration required for this program is:
-* Java
+* Java 17 or higher
 
 ## Supported languages
 - English (United States)
 - Simplified Chinese (China)
-
-## Found BUGs
-- (Fixed in 1.2) The dialogs may be displayed multiple times.
-- (Fixed in 1.2) The asset files of some versions (1.7, etc.) could not be loaded.
-
-## Precautions
-- (Fixed in 1.1) Please run the program in a directory with no spaces in the path. If you want to custom the working directories, please make sure that there are no spaces in the path. This will be fixed in a future version.
 
 ## About Author
 MrShiehX<br/>

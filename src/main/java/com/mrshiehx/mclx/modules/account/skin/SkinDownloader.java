@@ -25,7 +25,7 @@ public class SkinDownloader {
             } catch (JSONException ex) {
                 ex.printStackTrace();
             }
-            String uuid = jsonObject.optString("uu", "0");
+            String uuid = jsonObject.optString("uuid", "0");
             if (!isEmpty(uuid)) {
                 try {
                     URL url = new URL("https://sessionserver.mojang.com/session/minecraft/profile/" + uuid);

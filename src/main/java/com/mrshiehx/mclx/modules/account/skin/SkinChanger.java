@@ -27,9 +27,9 @@ public class SkinChanger {
                 } catch (JSONException ex) {
                     ex.printStackTrace();
                 }
-                if(jsonObject.optInt("lm")!=1)return;
-                String uuid = jsonObject.optString("uu");
-                String accessToken = jsonObject.optString("at");
+                if(jsonObject.optInt("loginMethod")!=1)return;
+                String uuid = jsonObject.optString("uuid");
+                String accessToken = jsonObject.optString("accessToken");
                 if (!isEmpty(uuid) && !isEmpty(accessToken)) {
                     try {
                         URL url = new URL("https://api.mojang.com/user/profile/" + uuid + "/skin");
@@ -38,7 +38,7 @@ public class SkinChanger {
                         connection.setConnectTimeout(15000);
                         connection.setReadTimeout(15000);
                         connection.setRequestMethod("PUT");
-                        connection.setRequestProperty("Authorization", jsonObject.optString("tt")+" " + accessToken);
+                        connection.setRequestProperty("Authorization", jsonObject.optString("tokenType")+" " + accessToken);
                         connection.setRequestProperty("Accept", "*/*");
                         String boundary = "~~~~~~~~~~~~~~~~~~~~~~~~~";
                         connection.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);

@@ -20,12 +20,12 @@ public class SkinResetter {
         } catch (JSONException ex) {
             ex.printStackTrace();
         }
-        if (jsonObject.optInt("lm") == 1) {
-            String uuid = jsonObject.optString("uu");
+        if (jsonObject.optInt("loginMethod") == 1) {
+            String uuid = jsonObject.optString("uuid");
             if (!isEmpty(uuid)) {
                 String url = "https://api.mojang.com/user/profile/" + uuid + "/skin";
                 try {
-                    JSONObject result = Utils.parseJSONObject(Utils.delete(url, jsonObject.optString("tt"), jsonObject.optString("at")));
+                    JSONObject result = Utils.parseJSONObject(Utils.delete(url, jsonObject.optString("tokenType"), jsonObject.optString("accessToken")));
                     if (result != null && result.has("error")) {
                         JOptionPane.showMessageDialog(frame, String.format(getString("DIALOG_OFFICIAL_LOGIN_FAILED_TEXT"), result.optString("error"), result.optString("errorMessage")), getString("DIALOG_TITLE_FAILED_RESET_SKIN"), JOptionPane.ERROR_MESSAGE);
                     } else {

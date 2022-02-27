@@ -2,12 +2,15 @@ package com.mrshiehx.mclx.modules.version;
 
 import com.mrshiehx.mclx.MinecraftLauncherX;
 import com.mrshiehx.mclx.modules.MinecraftLauncher;
+import com.mrshiehx.mclx.utils.IOUtils;
 import com.mrshiehx.mclx.utils.Utils;
+import org.json.JSONObject;
 
 import javax.swing.*;
 
 import java.io.File;
 
+import static com.mrshiehx.mclx.MinecraftLauncherX.gameDir;
 import static com.mrshiehx.mclx.MinecraftLauncherX.getString;
 
 public class VersionsManager extends JDialog {
@@ -25,7 +28,7 @@ public class VersionsManager extends JDialog {
                 }
                 String[] fs2 = Utils.listVersions(versionsDir);
                 if (fs2.length > 0&&!var) showDialog(frame, versionsDir, false);
-                MinecraftLauncherX.updateVersions();
+                MinecraftLauncherX.updateVersions(null);
             }
         }else{
             JOptionPane.showMessageDialog(frame,getString("DIALOG_NO_VERSIONS_MESSAGE"),getString("DIALOG_TITLE_NOTICE"),JOptionPane.INFORMATION_MESSAGE);
@@ -80,6 +83,27 @@ public class VersionsManager extends JDialog {
                         file2.renameTo(new File(newFile,name+".jar"));
                         file3.renameTo(new File(newFile,name+".json"));
                         return true;
+                    }
+                },
+                new VersionOperation() {
+                    @Override
+                    public String toString() {
+                        return getString("MANAGE_VERSION_REDOWNLOAD_NATIVES");
+                    }
+
+                    @Override
+                    public boolean operate() {
+                        try {
+                            File versionDir = new File(versionsDir, version);
+                            File json = new File(versionDir, version + ".json");
+                            JSONObject jsonObject = new JSONObject(Utils.readFileContent(json));
+                            NativesReDownloader.reDownload(frame, versionDir, jsonObject.optJSONArray("libraries"));
+                            return true;
+                        }catch (Exception e){
+                            e.printStackTrace();
+                            Utils.exceptionDialog(frame,e);
+                        }
+                        return false;
                     }
                 },
         };

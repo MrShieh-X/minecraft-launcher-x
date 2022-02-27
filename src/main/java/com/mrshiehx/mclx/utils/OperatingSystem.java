@@ -1,8 +1,12 @@
 package com.mrshiehx.mclx.utils;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -67,7 +71,12 @@ public enum OperatingSystem {
     /**
      * The version of current operating system.
      */
-    public static final String SYSTEM_VERSION = System.getProperty("os.version");
+    public static final String SYSTEM_VERSION;
+    /**
+     * Windows system build number.
+     * When the version number is not recognized or on another system, the value will be -1.
+     */
+    public static final int SYSTEM_BUILD_NUMBER;
 
     public static final Pattern INVALID_RESOURCE_CHARACTERS;
     private static final String[] INVALID_RESOURCE_BASENAMES;
@@ -75,6 +84,10 @@ public enum OperatingSystem {
 
     private static final Pattern MEMINFO_PATTERN = Pattern.compile("^(?<key>.*?):\\s+(?<value>\\d+) kB?$");
 
+    /**
+     * The system default charset.
+     */
+    public static final Charset NATIVE_CHARSET;
     static {
         String name = System.getProperty("os.name").toLowerCase(Locale.US);
         if (name.contains("win"))
@@ -92,6 +105,24 @@ public enum OperatingSystem {
                 .orElse(1024);
 
         SUGGESTED_MEMORY = (int) (Math.round(1.0 * TOTAL_MEMORY / 4.0 / 128.0) * 128);
+        Charset nativeCharset = Charset.defaultCharset();
+
+        String nativeEncoding = System.getProperty("native.encoding");
+        try {
+                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName(nativeEncoding);
+                }
+
+                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
+                    nativeCharset = StandardCharsets.UTF_8;
+                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
+                    nativeCharset = Charset.forName("GB18030");
+                }
+        } catch (UnsupportedCharsetException e) {
+            e.printStackTrace();
+        }
+
+        NATIVE_CHARSET = nativeCharset;
 
         // setup the invalid names
         if (CURRENT_OS == WINDOWS) {
@@ -103,12 +134,46 @@ public enum OperatingSystem {
             Arrays.sort(INVALID_RESOURCE_BASENAMES);
             //CLOCK$ may be used if an extension is provided
             INVALID_RESOURCE_FULLNAMES = new String[]{"clock$"};
+
+            String versionNumber = null;
+            int buildNumber = -1;
+
+            try {
+                Process process = Runtime.getRuntime().exec(new String[]{"cmd", "ver"});
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), NATIVE_CHARSET))) {
+                    Matcher matcher = Pattern.compile("(?<version>[0-9]+\\.[0-9]+\\.(?<build>[0-9]+)(\\.[0-9]+)?)]$")
+                            .matcher(reader.readLine().trim());
+
+                    if (matcher.find()) {
+                        versionNumber = matcher.group("version");
+                        buildNumber = Integer.parseInt(matcher.group("build"));
+                    }
+                }
+                process.destroy();
+            } catch (Throwable ignored) {
+            }
+
+            if (versionNumber == null) {
+                versionNumber = System.getProperty("os.version");
+            }
+
+            /*String osName = System.getProperty("os.name");
+
+            // Java 17 or earlier recognizes Windows 11 as Windows 10
+            if (osName.equals("Windows 10") && buildNumber >= 22000) {
+                osName = "Windows 11";
+            }*/
+
+            SYSTEM_VERSION = versionNumber;
+            SYSTEM_BUILD_NUMBER = buildNumber;
         } else {
             //only front slash and null char are invalid on UNIXes
             //taken from http://www.faqs.org/faqs/unix-faq/faq/part2/section-2.html
             INVALID_RESOURCE_CHARACTERS = null;
             INVALID_RESOURCE_BASENAMES = null;
             INVALID_RESOURCE_FULLNAMES = null;
+            SYSTEM_VERSION = System.getProperty("os.version");
+            SYSTEM_BUILD_NUMBER = -1;
         }
     }
 

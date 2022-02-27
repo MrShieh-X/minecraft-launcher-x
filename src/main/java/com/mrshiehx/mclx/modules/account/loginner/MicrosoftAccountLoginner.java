@@ -120,15 +120,15 @@ public class MicrosoftAccountLoginner {
                                                             String var = mcSecond.optString("errorMessage");
                                                             JOptionPane.showMessageDialog(frame, String.format(getString("DIALOG_OFFICIAL_LOGIN_FAILED_TEXT"), mcSecond.optString("error"), var), getString("DIALOG_OFFICIAL_LOGIN_FAILED_TITLE"), JOptionPane.ERROR_MESSAGE);
                                                         } else {
-                                                            jsonObject.put("lm", 2);
-                                                            jsonObject.put("at", access_token);
-                                                            jsonObject.put("tt", tokenType);
-                                                            jsonObject.put("uu", mcSecond.optString("id"));
-                                                            jsonObject.put("pn", mcSecond.optString("name"));
+                                                            jsonObject.put("loginMethod", 2);
+                                                            jsonObject.put("accessToken", access_token);
+                                                            jsonObject.put("tokenType", tokenType);
+                                                            jsonObject.put("uuid", mcSecond.optString("id"));
+                                                            jsonObject.put("playerName", mcSecond.optString("name"));
                                                             MinecraftLauncherX.configContent = jsonObject.toString();
                                                             try {
                                                                 FileWriter writer = new FileWriter(configFile, false);
-                                                                writer.write(jsonObject.toString());
+                                                                writer.write(jsonObject.toString(Settings.INDENT_FACTOR));
                                                                 writer.close();
                                                             } catch (IOException ex) {
                                                                 ex.printStackTrace();
@@ -140,7 +140,7 @@ public class MicrosoftAccountLoginner {
                                                             frame.playerName = new JLabel();
                                                             frame.playerName.setBounds(140, 15, 135, 25);
                                                             frame.add(frame.playerName);
-                                                            ((JLabel) frame.playerName).setText(jsonObject.optString("pn"));
+                                                            ((JLabel) frame.playerName).setText(jsonObject.optString("playerName"));
                                                             dialog.setVisible(false);
                                                             dialog.dispose();
                                                             JOptionPane.showMessageDialog(frame, successText, getString("DIALOG_TITLE_NOTICE"), JOptionPane.INFORMATION_MESSAGE);

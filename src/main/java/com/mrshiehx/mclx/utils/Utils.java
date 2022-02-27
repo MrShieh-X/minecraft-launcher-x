@@ -1,11 +1,13 @@
 package com.mrshiehx.mclx.utils;
 
 import com.mrshiehx.mclx.MinecraftLauncherX;
-import javafx.util.Pair;
+import com.mrshiehx.mclx.bean.Pair;
+import com.mrshiehx.mclx.settings.Settings;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.swing.*;
+import java.awt.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -14,6 +16,8 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -88,6 +92,7 @@ public class Utils {
             return output.toByteArray();
         } else return null;
     }
+
     public static String readData(HttpURLConnection con) throws IOException {
         try {
             try (InputStream stdout = con.getInputStream()) {
@@ -102,33 +107,33 @@ public class Utils {
         }
     }
 
-    public static boolean isEmpty(CharSequence c){
-        return c==null||c.length()==0;
+    public static boolean isEmpty(CharSequence c) {
+        return c == null || c.length() == 0;
     }
 
-    public static JSONObject parseJSONObject(String j){
-        if(isEmpty(j))return null;
-        try{
+    public static JSONObject parseJSONObject(String j) {
+        if (isEmpty(j)) return null;
+        try {
             return new JSONObject(j);
-        }catch (Exception ignore){
+        } catch (Exception ignore) {
         }
         return null;
     }
 
-    public static JSONArray parseJSONArray(String j){
-        if(isEmpty(j))return null;
-        try{
+    public static JSONArray parseJSONArray(String j) {
+        if (isEmpty(j)) return null;
+        try {
             return new JSONArray(j);
-        }catch (Exception ignore){
+        } catch (Exception ignore) {
         }
         return null;
     }
-
 
 
     public static String post(String first, String second) throws IOException {
-        return post(first, second,"application/json",null);
+        return post(first, second, "application/json", null);
     }
+
     public static String post(String first, String second, String contentType, String accept) throws IOException {
         URL ConnectUrl = new URL(first);
         HttpURLConnection connection = (HttpURLConnection) ConnectUrl.openConnection();
@@ -137,17 +142,18 @@ public class Utils {
         connection.setDoOutput(true);
         connection.setRequestMethod("POST");
         connection.setRequestProperty("Content-Type", contentType);
-        if(!Utils.isEmpty(accept))connection.setRequestProperty("Accept", accept);
+        if (!Utils.isEmpty(accept)) connection.setRequestProperty("Accept", accept);
         OutputStream wrt = ((connection.getOutputStream()));
 
         if (second != null) wrt.write(second.getBytes());
         return (Utils.readData(connection));
     }
 
-    public static String get(String url, String tokenType, String token) throws IOException{
-        return get(url, tokenType,token,"application/json","application/json");
+    public static String get(String url, String tokenType, String token) throws IOException {
+        return get(url, tokenType, token, "application/json", "application/json");
     }
-    public static String get(String url, String tokenType, String token, String contentType, String accept) throws IOException{
+
+    public static String get(String url, String tokenType, String token, String contentType, String accept) throws IOException {
         URL ConnectUrl = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) ConnectUrl.openConnection();
         //here is your code above
@@ -156,17 +162,19 @@ public class Utils {
         connection.setDoOutput(true);
         connection.setRequestMethod("GET");
         connection.setRequestProperty("Content-Type", contentType);
-        connection.setRequestProperty("Authorization",tokenType+" "+token);
+        connection.setRequestProperty("Authorization", tokenType + " " + token);
         //System.out.println(tokenType);
         //System.out.println(token);
-        if(!Utils.isEmpty(accept))connection.setRequestProperty("Accept", accept);
+        if (!Utils.isEmpty(accept)) connection.setRequestProperty("Accept", accept);
         //connection.getOutputStream();//.write("\"publicCreateProfileDTO\":\"45\"".getBytes(UTF_8));
         return (Utils.readData(connection));
     }
-    public static String delete(String url, String tokenType, String token) throws IOException{
-        return delete(url, tokenType,token,"application/json","application/json");
+
+    public static String delete(String url, String tokenType, String token) throws IOException {
+        return delete(url, tokenType, token, "application/json", "application/json");
     }
-    public static String delete(String url, String tokenType, String token, String contentType, String accept) throws IOException{
+
+    public static String delete(String url, String tokenType, String token, String contentType, String accept) throws IOException {
         URL ConnectUrl = new URL(url);
         HttpURLConnection connection = (HttpURLConnection) ConnectUrl.openConnection();
         //here is your code above
@@ -175,61 +183,57 @@ public class Utils {
         connection.setDoOutput(true);
         connection.setRequestMethod("DELETE");
         connection.setRequestProperty("Content-Type", contentType);
-        connection.setRequestProperty("Authorization",tokenType+" "+token);
+        connection.setRequestProperty("Authorization", tokenType + " " + token);
         //System.out.println(tokenType);
         //System.out.println(token);
-        if(!Utils.isEmpty(accept))connection.setRequestProperty("Accept", accept);
+        if (!Utils.isEmpty(accept)) connection.setRequestProperty("Accept", accept);
         //connection.getOutputStream();//.write("\"publicCreateProfileDTO\":\"45\"".getBytes(UTF_8));
         return (Utils.readData(connection));
     }
 
-    public static String getLibraryName(String path){
-        if(Utils.isEmpty(path))return "";
-        String splitter= File.separator;
-        if(!path.contains(splitter))return path;
-        path=path.replace(File.separatorChar,'/');
-        splitter="/";
-        String[] strings=path.split(splitter);
-        if(strings.length<4)return path;
+    public static String getLibraryName(String path) {
+        if (Utils.isEmpty(path)) return "";
+        String splitter = File.separator;
+        if (!path.contains(splitter)) return path;
+        path = path.replace(File.separatorChar, '/');
+        splitter = "/";
+        String[] strings = path.split(splitter);
+        if (strings.length < 4) return path;
 
-        return strings[strings.length-3];
+        return strings[strings.length - 3];
     }
 
-    public static String getNativeLibraryName(String path){
-        if(Utils.isEmpty(path))return "";
-        String splitter=File.separator;
-        if(!path.contains(splitter)&&!path.contains("\\")&&!path.contains("/"))return path;
-        path=path.replace(File.separatorChar,'/');
-        splitter="/";
-        String[] strings=path.split(splitter);
-        if(strings.length<3)return path;
+    public static String getNativeLibraryName(String path) {
+        if (Utils.isEmpty(path)) return "";
+        String splitter = File.separator;
+        if (!path.contains(splitter) && !path.contains("\\") && !path.contains("/")) return path;
+        path = path.replace(File.separatorChar, '/');
+        splitter = "/";
+        String[] strings = path.split(splitter);
+        if (strings.length < 3) return path;
 
-        return strings[strings.length-3];
+        return strings[strings.length - 3];
     }
 
 
-    public static String[]listVersions(File versionsDir) {
+    public static String[] listVersions(File versionsDir) {
         List<String> versionsStrings = new ArrayList<>();
         File[] files = versionsDir.listFiles(new FileFilter() {
             @Override
             public boolean accept(File pathname) {
-                if(!pathname.isDirectory())return false;
-                File[]files=pathname.listFiles();
-                if(files==null||files.length<2)return false;
-                return new File(pathname,pathname.getName()+".json").exists()&&new File(pathname,pathname.getName()+".jar").exists();
+                if (!pathname.isDirectory()) return false;
+                File[] files = pathname.listFiles();
+                if (files == null || files.length < 2) return false;
+                return new File(pathname, pathname.getName() + ".json").exists() && new File(pathname, pathname.getName() + ".jar").exists();
             }
         });
-        if (files != null&&files.length>0) {
+        if (files != null && files.length > 0) {
             for (File file : files) {
                 versionsStrings.add(getVersion(file.getAbsolutePath()));
             }
-            if(versionsStrings.size()>0){
             String[] strArray = new String[versionsStrings.size()];
             return versionsStrings.toArray(strArray);
-            }else{
-                return new String[0];
-            }
-        }else{
+        } else {
             return new String[0];
         }
     }
@@ -289,14 +293,15 @@ public class Utils {
     }
 
     public static File createFile(File file) throws IOException {
-        return createFile(file,true);
+        return createFile(file, true);
     }
-    public static File createFile(File file,boolean delete) throws IOException {
+
+    public static File createFile(File file, boolean delete) throws IOException {
         if (file.getParentFile() != null && !file.getParentFile().exists()) {
             file.getParentFile().mkdirs();
         }
-        if (delete&&file.exists()) file.delete();
-        if(!file.exists())file.createNewFile();
+        if (delete && file.exists()) file.delete();
+        if (!file.exists()) file.createNewFile();
         return file;
     }
 
@@ -320,6 +325,120 @@ public class Utils {
     }
 
     public static String valueOf(Object value) {
-        return value==null?"":value.toString();
+        return value == null ? "" : value.toString();
+    }
+
+    public static boolean isWindows() {
+        /*return File.separator.equals("\\")
+                || File.separatorChar == '\\'
+                ||*//*AccessController.doPrivileged(OSInfo.getOSTypeAction()) == OSInfo.OSType.WINDOWS*//*System.getProperty("os.name").toLowerCase().contains("windows");*/
+        return OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS;
+    }
+
+    public static String getDefaultJavaPath() {
+        String s = System.getProperty("java.home");
+        return isEmpty(s) ? "" : new File(s, isWindows() ? "bin\\java.exe" : "bin/java").getAbsolutePath();
+    }
+
+    public static void saveConfig(JSONObject jsonObject) {
+        MinecraftLauncherX.configContent = jsonObject.toString();
+        try {
+            FileWriter writer = new FileWriter(Settings.configFile, false);
+            writer.write(jsonObject.toString(Settings.INDENT_FACTOR));
+            writer.close();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    public static JSONObject getConfig() {
+        JSONObject jsonObject;
+        try {
+            jsonObject = new JSONObject(MinecraftLauncherX.configContent);
+        } catch (Exception e3) {
+            e3.printStackTrace();
+            jsonObject = new JSONObject();
+        }
+        return jsonObject;
+    }
+
+    public static File getAssets(String assetsDirPath, File gameDir) {
+        return !isEmpty(assetsDirPath) ? new File(assetsDirPath) : new File(gameDir, "assets");
+    }
+
+    public static int getJavaVersion(String javaFile) {
+        try {
+            String version = null;
+            Process process = new ProcessBuilder(javaFile, "-XshowSettings:properties", "-version").start();
+            try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
+                for (String line; (line = reader.readLine()) != null; ) {
+                    Matcher m = Pattern.compile("java\\.version = (?<version>.*)").matcher(line);
+                    if (m.find()) {
+                        version = m.group("version");
+                        break;
+                    }
+                }
+            }
+
+            if (version == null) {
+                process = new ProcessBuilder(javaFile, "-version").start();
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(process.getErrorStream(), OperatingSystem.NATIVE_CHARSET))) {
+                    for (String line; (line = reader.readLine()) != null; ) {
+                        Matcher m = Pattern.compile("version \"(?<version>(.*?))\"").matcher(line);
+                        if (m.find()) {
+                            version = m.group("version");
+                            break;
+                        }
+                    }
+                }
+            }
+            if (version != null) {
+                if (version.startsWith("1.")) {
+                    version = version.substring(2, 3);
+                } else {
+                    int dot = version.indexOf(".");
+                    if (dot != -1) {
+                        version = version.substring(0, dot);
+                    }
+                }
+                return Integer.parseInt(version);
+            }
+        }catch (Throwable e){
+            e.printStackTrace();
+        }
+        return -1;
+    }
+
+    public static int getJavaVersion() {
+        String version = System.getProperty("java.version");
+        if (version.startsWith("1.")) {
+            version = version.substring(2, 3);
+        } else {
+            int dot = version.indexOf(".");
+            if (dot != -1) {
+                version = version.substring(0, dot);
+            }
+        }
+        return Integer.parseInt(version);
+    }
+
+    public static String getNativesDirName() {
+        return "natives-" + OperatingSystem.CURRENT_OS.getCheckedName();
+    }
+
+    public static String readFileContent(File file) throws IOException {
+        BufferedReader reader;
+        StringBuilder sbf = new StringBuilder();
+        reader = new BufferedReader(new FileReader(file));
+        String tempStr;
+        while ((tempStr = reader.readLine()) != null) {
+            sbf.append(tempStr);
+        }
+        reader.close();
+        return sbf.toString();
+    }
+
+    public static void exceptionDialog(JFrame frame,Throwable throwable){
+        JOptionPane.showMessageDialog(frame,throwable,getString("DIALOG_TITLE_NOTICE"),JOptionPane.ERROR_MESSAGE);
     }
 }
