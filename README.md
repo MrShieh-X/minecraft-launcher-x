@@ -24,7 +24,7 @@ Historical version: <br/>
 
 ## Supported languages
 - English (United States)
-- Simplified Chinese (China)
+- Simplified Chinese
 
 ## About Author
 MrShiehX<br/>
