@@ -88,6 +88,7 @@ public enum OperatingSystem {
      * The system default charset.
      */
     public static final Charset NATIVE_CHARSET;
+
     static {
         String name = System.getProperty("os.name").toLowerCase(Locale.US);
         if (name.contains("win"))
@@ -109,15 +110,15 @@ public enum OperatingSystem {
 
         String nativeEncoding = System.getProperty("native.encoding");
         try {
-                if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
-                    nativeCharset = Charset.forName(nativeEncoding);
-                }
+            if (nativeEncoding != null && !nativeEncoding.equalsIgnoreCase(nativeCharset.name())) {
+                nativeCharset = Charset.forName(nativeEncoding);
+            }
 
-                if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
-                    nativeCharset = StandardCharsets.UTF_8;
-                } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
-                    nativeCharset = Charset.forName("GB18030");
-                }
+            if (nativeCharset == StandardCharsets.UTF_8 || nativeCharset == StandardCharsets.US_ASCII) {
+                nativeCharset = StandardCharsets.UTF_8;
+            } else if ("GBK".equalsIgnoreCase(nativeCharset.name()) || "GB2312".equalsIgnoreCase(nativeCharset.name())) {
+                nativeCharset = Charset.forName("GB18030");
+            }
         } catch (UnsupportedCharsetException e) {
             e.printStackTrace();
         }

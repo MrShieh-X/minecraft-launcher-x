@@ -1,6 +1,6 @@
 package com.mrshiehx.mclx.exceptions;
 
-public class AuthenticationException extends Exception{
+public class AuthenticationException extends Exception {
     public AuthenticationException() {
         super();
     }
@@ -18,8 +18,8 @@ public class AuthenticationException extends Exception{
     }
 
     protected AuthenticationException(String message, Throwable cause,
-                        boolean enableSuppression,
-                        boolean writableStackTrace) {
+                                      boolean enableSuppression,
+                                      boolean writableStackTrace) {
         super(message, cause, enableSuppression, writableStackTrace);
     }
 }

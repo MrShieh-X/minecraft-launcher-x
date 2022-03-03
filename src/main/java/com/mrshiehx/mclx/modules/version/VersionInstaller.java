@@ -27,7 +27,7 @@ import static com.mrshiehx.mclx.MinecraftLauncherX.*;
 import static com.mrshiehx.mclx.utils.DownloadDialog.*;
 
 public class VersionInstaller {
-    public static void showDialog(Frame frame){
+    public static void showDialog(Frame frame) {
         new Thread(new Runnable() {
             @Override
             public void run() {
@@ -92,16 +92,16 @@ public class VersionInstaller {
                                             if (clientJo != null) {
                                                 String url = clientJo.optString("url");
                                                 if (!isEmpty(url)) {
-                                                    JProgressBar progressBar=createProgressBar();
-                                                    JTextArea textArea=createTextArea();
-                                                  UnExitableDialog dialog=createDownloadDialog(frame,progressBar,textArea);
+                                                    JProgressBar progressBar = createProgressBar();
+                                                    JTextArea textArea = createTextArea();
+                                                    UnExitableDialog dialog = createDownloadDialog(frame, progressBar, textArea);
 
                                                     dialog.addComponentListener(new ComponentAdapter() {
                                                         @Override
                                                         public void componentShown(ComponentEvent e) {
                                                             new Thread(() -> {
                                                                 try {
-                                                                    String text=getString("MESSAGE_INSTALL_DOWNLOADING_JAR_FILE");
+                                                                    String text = getString("MESSAGE_INSTALL_DOWNLOADING_JAR_FILE");
 
                                                                     addLog(textArea, text);
                                                                     downloadFile(url, jarFile, progressBar);
@@ -112,7 +112,7 @@ public class VersionInstaller {
                                                                     addLog(textArea, getString("MESSAGE_INSTALL_DOWNLOADING_ASSETS"));
                                                                     //downloadFile(url, jarFile, progressBar);
                                                                     File librariesDir = new File(gameDir, "libraries");
-                                                                    File assetsDir = /*new File(gameDir, "assets")*/Utils.getAssets(Utils.getConfig().optString("assetsPath"),gameDir);
+                                                                    File assetsDir = /*new File(gameDir, "assets")*/Utils.getAssets(Utils.getConfig().optString("assetsPath"), gameDir);
                                                                     //System.out.println(assetsDir.getAbsolutePath());
                                                                     //System.out.println(assetsDir.getAbsolutePath());
                                                                     File indexesDir = new File(assetsDir, "indexes");
@@ -168,59 +168,59 @@ public class VersionInstaller {
                                                                                                     //String text2=String.format(getString("MESSAGE_DOWNLOADING_FILE"),hash);
                                                                                                     //addLog(textArea, text2);
                                                                                                     downloadFile("https://resources.download.minecraft.net/" + hash.substring(0, 2) + "/" + hash, file, progressBar);
-                                                                                                    System.out.println(i+"/"+objectsJa.length());
+                                                                                                    System.out.println(i + "/" + objectsJa.length());
                                                                                                 }
                                                                                             }
                                                                                         } catch (Exception e1) {
                                                                                             e1.printStackTrace();
-                                                                                            String textx=String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), hash);
+                                                                                            String textx = String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), hash);
                                                                                             //print(VersionInstaller.class,textx);
                                                                                             addLog(textArea, textx);
                                                                                         }
                                                                                     }
                                                                                 }
-                                                                                String textx=getString("MESSAGE_INSTALL_DOWNLOADED_ASSETS");
+                                                                                String textx = getString("MESSAGE_INSTALL_DOWNLOADED_ASSETS");
                                                                                 //print(VersionInstaller.class,textx);
                                                                                 addLog(textArea, textx);
                                                                             } catch (Exception e1) {
                                                                                 e1.printStackTrace();
-                                                                                String textx=String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"), e1);
+                                                                                String textx = String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"), e1);
                                                                                 //print(VersionInstaller.class,textx);
-                                                                                addLog(textArea,textx );
+                                                                                addLog(textArea, textx);
                                                                             }
                                                                         } else {
-                                                                            String textx=String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"), getString("MESSAGE_EXCEPTION_DETAIL_NOT_FOUND_URL"));
+                                                                            String textx = String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"), getString("MESSAGE_EXCEPTION_DETAIL_NOT_FOUND_URL"));
                                                                             //print(VersionInstaller.class,textx);
                                                                             addLog(textArea, textx);
                                                                             //textArea.setText(textArea.getText()+String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_ASSETS"),getString("MESSAGE_EXCEPTION_DETAIL_NOT_FOUND_URL"))+"\n");
                                                                         }
                                                                     } else {
-                                                                        String textx=getString("MESSAGE_INSTALL_DOWNLOAD_ASSETS_NO_INDEX");
+                                                                        String textx = getString("MESSAGE_INSTALL_DOWNLOAD_ASSETS_NO_INDEX");
                                                                         //print(VersionInstaller.class,textx);
                                                                         //textArea.setText(textArea.getText()+getString("MESSAGE_INSTALL_DOWNLOAD_ASSETS_NO_INDEX""))+"\n");
                                                                         addLog(textArea, textx);
                                                                     }
 
 
-                                                                    String textx=getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES");
+                                                                    String textx = getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES");
                                                                     //print(VersionInstaller.class,textx);
                                                                     addLog(textArea, textx);
                                                                     try {
                                                                         JSONArray librariesJa = headVersionFile.optJSONArray("libraries");
                                                                         if (librariesJa != null) {
-                                                                            List<String>nativesNames=new ArrayList<>();
+                                                                            List<String> nativesNames = new ArrayList<>();
                                                                             for (int i = 0; i < librariesJa.length(); i++) {
                                                                                 JSONObject jsonObject = librariesJa.optJSONObject(i);
                                                                                 if (jsonObject != null) {
-                                                                                    boolean meet=true;
-                                                                                    JSONArray rules=jsonObject.optJSONArray("rules");
-                                                                                    if(rules!=null){
-                                                                                        meet=MinecraftLauncher.isMeetConditions(rules,false,false);
+                                                                                    boolean meet = true;
+                                                                                    JSONArray rules = jsonObject.optJSONArray("rules");
+                                                                                    if (rules != null) {
+                                                                                        meet = MinecraftLauncher.isMeetConditions(rules, false, false);
                                                                                     }
                                                                                     //System.out.println(meet);
 
                                                                                     JSONObject downloadsJo1 = jsonObject.optJSONObject("downloads");
-                                                                                    if (meet&& downloadsJo1 != null) {
+                                                                                    if (meet && downloadsJo1 != null) {
                                                                                         JSONObject artifactJo = downloadsJo1.optJSONObject("artifact");
                                                                                         if (artifactJo != null) {
                                                                                             String path = artifactJo.optString("path");
@@ -233,14 +233,14 @@ public class VersionInstaller {
                                                                                                         file.createNewFile();
                                                                                                     }
                                                                                                     if (file.length() == 0) {
-                                                                                                        String textxx=String.format(getString("MESSAGE_DOWNLOADING_FILE"),url1.substring(url1.lastIndexOf("/")+1));
+                                                                                                        String textxx = String.format(getString("MESSAGE_DOWNLOADING_FILE"), url1.substring(url1.lastIndexOf("/") + 1));
                                                                                                         //print(VersionInstaller.class,textxx);
                                                                                                         addLog(textArea, textxx);
                                                                                                         downloadFile(url1, file, progressBar);
                                                                                                     }
                                                                                                 } catch (Exception e1) {
                                                                                                     e1.printStackTrace();
-                                                                                                    String textxx=String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARY"), url1, e1);
+                                                                                                    String textxx = String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARY"), url1, e1);
                                                                                                     //print(VersionInstaller.class,textxx);
                                                                                                     addLog(textArea, textxx);
                                                                                                 }
@@ -250,12 +250,13 @@ public class VersionInstaller {
 
                                                                                         JSONObject classifiersJo = downloadsJo1.optJSONObject("classifiers");
                                                                                         if (classifiersJo != null) {
-                                                                                            JSONObject nativesNamesJO=jsonObject.optJSONObject("natives");
+                                                                                            JSONObject nativesNamesJO = jsonObject.optJSONObject("natives");
 
-                                                                                            if(nativesNamesJO!=null) {
+                                                                                            if (nativesNamesJO != null) {
 
                                                                                                 //String osName = System.getProperty("os.name");
-                                                                                                JSONObject nativesJo = classifiersJo.optJSONObject(nativesNamesJO.optString(OperatingSystem.CURRENT_OS.getCheckedName()));;
+                                                                                                JSONObject nativesJo = classifiersJo.optJSONObject(nativesNamesJO.optString(OperatingSystem.CURRENT_OS.getCheckedName()));
+                                                                                                ;
                                                                                                 /*if (*//*osName.toLowerCase().contains("windows")*//*OperatingSystem.CURRENT_OS == OperatingSystem.WINDOWS) {
                                                                                                     nativesJo = classifiersJo.optJSONObject("natives-windows");
                                                                                                 } else if (*//*osName.toLowerCase().contains("mac"*//*OperatingSystem.CURRENT_OS == OperatingSystem.OSX) {
@@ -275,7 +276,7 @@ public class VersionInstaller {
                                                                                                                 File nativeFile = new File(tempNatives, url1.substring(url1.lastIndexOf("/") + 1));
                                                                                                                 //if(!nativeFile.exists()) {
                                                                                                                 nativeFile.createNewFile();
-                                                                                                                String textxx=String.format(getString("MESSAGE_DOWNLOADING_FILE"),url1.substring(url1.lastIndexOf("/")+1));
+                                                                                                                String textxx = String.format(getString("MESSAGE_DOWNLOADING_FILE"), url1.substring(url1.lastIndexOf("/") + 1));
                                                                                                                 //print(VersionInstaller.class,textxx);
                                                                                                                 addLog(textArea, textxx);
                                                                                                                 downloadFile(url1, nativeFile, progressBar);
@@ -284,7 +285,7 @@ public class VersionInstaller {
                                                                                                             }
                                                                                                         } catch (Exception e1) {
                                                                                                             e1.printStackTrace();
-                                                                                                            String textxx=String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), url1);
+                                                                                                            String textxx = String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), url1);
                                                                                                             //print(VersionInstaller.class,textxx);
                                                                                                             addLog(textArea, textxx);
                                                                                                         }
@@ -313,7 +314,7 @@ public class VersionInstaller {
                                                                             try {
                                                                                 File dir = new File(tempNatives, file.getName().substring(0, file.getName().lastIndexOf(".")));
                                                                                 dir.mkdirs();
-                                                                                String textxxx=String.format(getString("MESSAGE_UNZIPPING_FILE"),file.getName());
+                                                                                String textxxx = String.format(getString("MESSAGE_UNZIPPING_FILE"), file.getName());
                                                                                 //print(VersionInstaller.class,text);
                                                                                 addLog(textArea, textxxx);
                                                                                 unZip(file, dir, progressBar);
@@ -383,7 +384,7 @@ public class VersionInstaller {
                                                                             File[] files = file.listFiles(new FilenameFilter() {
                                                                                 @Override
                                                                                 public boolean accept(File dir, String name12) {
-                                                                                    return name12.toLowerCase().endsWith(finalHouzhui)||name12.toLowerCase().endsWith(".jnilib");
+                                                                                    return name12.toLowerCase().endsWith(finalHouzhui) || name12.toLowerCase().endsWith(".jnilib");
                                                                                 }
                                                                             });
                                                                             libFiles.addAll(Arrays.asList(files));
@@ -393,7 +394,7 @@ public class VersionInstaller {
                                                                     for (File file : libFiles) {
                                                                         File to = new File(nativesDir, file.getName());
                                                                         try {
-                                                                            String textxxxxxx=String.format(getString("MESSAGE_COPYING_FILE"),file.getName(),to.getPath());
+                                                                            String textxxxxxx = String.format(getString("MESSAGE_COPYING_FILE"), file.getName(), to.getPath());
                                                                             //print(VersionInstaller.class,text);
                                                                             addLog(textArea, textxxxxxx);
                                                                             Utils.copyFile(file, to);
@@ -455,7 +456,6 @@ public class VersionInstaller {
     }
 
 
-
     private static boolean checkNetwork() {
         try {
             URL url = new URL("https://launchermeta.mojang.com");
@@ -474,10 +474,10 @@ public class VersionInstaller {
     }
 
     public static void addLog(JTextArea textArea, String message) {
-        print(VersionInstaller.class,message);
+        print(VersionInstaller.class, message);
         if (textArea != null) {
 
-            textArea.setText(textArea.getText() + "["+ new SimpleDateFormat("HH:mm:ss").format(new Date())+"]"+message + "\n");
+            textArea.setText(textArea.getText() + "[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" + message + "\n");
             Document doc = textArea.getDocument();
             textArea.setCaretPosition(doc.getLength());
         }

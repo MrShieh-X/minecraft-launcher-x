@@ -40,41 +40,41 @@ public class MicrosoftAccountLoginner {
                                 "?grant_type=authorization_code" +
                                 "&scope=XboxLive.signin+offline_access" +
                                 "&client_secret=" + secret +
-                                "&client_id="+CLIENT_ID +
+                                "&client_id=" + CLIENT_ID +
                                 "&redirect_uri=" + rUrl + "" +
                                 "&code=" + code;
-                        String secondString = ("client_id="+CLIENT_ID +
+                        String secondString = ("client_id=" + CLIENT_ID +
                                 "&grant_type=authorization_code" +
                                 "&scope=XboxLive.signin+offline_access" +
-                                "&client_id="+CLIENT_ID +
+                                "&client_id=" + CLIENT_ID +
                                 "&redirect_uri=" + rUrl + "" +
                                 "&code=" + code);
-                        String first = post(ACCESS_TOKEN_URL, secondString,"application/x-www-form-urlencoded",null);
+                        String first = post(ACCESS_TOKEN_URL, secondString, "application/x-www-form-urlencoded", null);
                         JSONObject result = Utils.parseJSONObject(first);
                         if (result != null) {
                             if (result.has("error") || result.has("error_description")) {
                                 String var = result.optString("error_description");
                                 JOptionPane.showMessageDialog(frame, String.format(getString("DIALOG_OFFICIAL_LOGIN_FAILED_TEXT"), result.optString("error"), var), getString("DIALOG_OFFICIAL_LOGIN_FAILED_TITLE"), JOptionPane.ERROR_MESSAGE);
                             } else {
-                                String tokenType=result.optString("token_type");
+                                String tokenType = result.optString("token_type");
                                 //String scope=result.optString("scope");
                                 //String access_token=result.optString("access_token");
-                                String refresh_token=result.optString("refresh_token");
+                                String refresh_token = result.optString("refresh_token");
                                 //String user_id=result.optString("user_id");
                                 //long expires_in=result.optLong("expires_in");
 
-                                String secondFirst="https://login.live.com/oauth20_token.srf" +
-                                        "?client_id="+CLIENT_ID +
-                                        "&client_secret="+secret +
-                                        "&refresh_token=" +refresh_token+
+                                String secondFirst = "https://login.live.com/oauth20_token.srf" +
+                                        "?client_id=" + CLIENT_ID +
+                                        "&client_secret=" + secret +
+                                        "&refresh_token=" + refresh_token +
                                         "&grant_type=refresh_token" +
-                                        "&redirect_uri="+rUrl;
-                                String secondSecond=
-                                        "client_id="+CLIENT_ID +
-                                                "&refresh_token=" +refresh_token+
+                                        "&redirect_uri=" + rUrl;
+                                String secondSecond =
+                                        "client_id=" + CLIENT_ID +
+                                                "&refresh_token=" + refresh_token +
                                                 "&grant_type=refresh_token" +
-                                                "&redirect_uri="+rUrl;
-                                String second = post(secondFirst, secondSecond,"application/x-www-form-urlencoded",null);
+                                                "&redirect_uri=" + rUrl;
+                                String second = post(secondFirst, secondSecond, "application/x-www-form-urlencoded", null);
                                 JSONObject result2 = Utils.parseJSONObject(second);
 
 
@@ -83,30 +83,30 @@ public class MicrosoftAccountLoginner {
                                         String var = result2.optString("error_description");
                                         JOptionPane.showMessageDialog(frame, String.format(getString("DIALOG_OFFICIAL_LOGIN_FAILED_TEXT"), result2.optString("error"), var), getString("DIALOG_OFFICIAL_LOGIN_FAILED_TITLE"), JOptionPane.ERROR_MESSAGE);
                                     } else {
-                                        String xboxLive= post("https://user.auth.xboxlive.com/user/authenticate","{\"Properties\":{\"AuthMethod\":\"RPS\",\"SiteName\":\"user.auth.xboxlive.com\",\"RpsTicket\":\"d="+result2.optString("access_token")+"\"},\"RelyingParty\":\"http://auth.xboxlive.com\",\"TokenType\":\"JWT\"}","application/json","application/json");
+                                        String xboxLive = post("https://user.auth.xboxlive.com/user/authenticate", "{\"Properties\":{\"AuthMethod\":\"RPS\",\"SiteName\":\"user.auth.xboxlive.com\",\"RpsTicket\":\"d=" + result2.optString("access_token") + "\"},\"RelyingParty\":\"http://auth.xboxlive.com\",\"TokenType\":\"JWT\"}", "application/json", "application/json");
 
-                                        JSONObject xboxLiveFirst=Utils.parseJSONObject(xboxLive);
-                                        if(xboxLiveFirst!=null&&!xboxLiveFirst.has("error")) {
-                                            String Token=xboxLiveFirst.optString("Token");
-                                            String uhs="";
-                                            JSONObject DisplayClaims=xboxLiveFirst.optJSONObject("DisplayClaims");
-                                            if(DisplayClaims!=null){
-                                                JSONArray xui=DisplayClaims.optJSONArray("xui");
-                                                if(xui!=null&&xui.length()>0){
-                                                    JSONObject firsta=xui.optJSONObject(0);
-                                                    if(firsta!=null)uhs=firsta.optString("uhs");
+                                        JSONObject xboxLiveFirst = Utils.parseJSONObject(xboxLive);
+                                        if (xboxLiveFirst != null && !xboxLiveFirst.has("error")) {
+                                            String Token = xboxLiveFirst.optString("Token");
+                                            String uhs = "";
+                                            JSONObject DisplayClaims = xboxLiveFirst.optJSONObject("DisplayClaims");
+                                            if (DisplayClaims != null) {
+                                                JSONArray xui = DisplayClaims.optJSONArray("xui");
+                                                if (xui != null && xui.length() > 0) {
+                                                    JSONObject firsta = xui.optJSONObject(0);
+                                                    if (firsta != null) uhs = firsta.optString("uhs");
                                                 }
                                             }
 
-                                            JSONObject xstsResult=Utils.parseJSONObject(post("https://xsts.auth.xboxlive.com/xsts/authorize","{\"Properties\":{\"SandboxId\":\"RETAIL\",\"UserTokens\":[\""+Token+"\"]},\"RelyingParty\":\"rp://api.minecraftservices.com/\",\"TokenType\":\"JWT\"}","application/json","application/json"));
+                                            JSONObject xstsResult = Utils.parseJSONObject(post("https://xsts.auth.xboxlive.com/xsts/authorize", "{\"Properties\":{\"SandboxId\":\"RETAIL\",\"UserTokens\":[\"" + Token + "\"]},\"RelyingParty\":\"rp://api.minecraftservices.com/\",\"TokenType\":\"JWT\"}", "application/json", "application/json"));
 
-                                            if(xstsResult!=null&&!xstsResult.has("error")) {
-                                                String xstsToken=xstsResult.optString("Token");
-                                                JSONObject mcFirst=Utils.parseJSONObject(post("https://api.minecraftservices.com/authentication/login_with_xbox","{\"identityToken\":\"XBL3.0 x="+uhs+";"+xstsToken+"\"}","application/json","application/json"));
+                                            if (xstsResult != null && !xstsResult.has("error")) {
+                                                String xstsToken = xstsResult.optString("Token");
+                                                JSONObject mcFirst = Utils.parseJSONObject(post("https://api.minecraftservices.com/authentication/login_with_xbox", "{\"identityToken\":\"XBL3.0 x=" + uhs + ";" + xstsToken + "\"}", "application/json", "application/json"));
 
-                                                if(mcFirst!=null&&!mcFirst.has("error")) {
+                                                if (mcFirst != null && !mcFirst.has("error")) {
                                                     String access_token = mcFirst.optString("access_token");
-                                                    JSONObject mcSecond = Utils.parseJSONObject(Utils.get("https://api.minecraftservices.com/minecraft/profile",tokenType, access_token));
+                                                    JSONObject mcSecond = Utils.parseJSONObject(Utils.get("https://api.minecraftservices.com/minecraft/profile", tokenType, access_token));
 
                                                     if (mcSecond != null) {
 
@@ -153,7 +153,7 @@ public class MicrosoftAccountLoginner {
                                                     }
 
 
-                                                }else {
+                                                } else {
                                                     //stem.ut.println(855);
                                                     JOptionPane.showMessageDialog(frame, getString("DIALOG_OFFICIAL_LOGIN_FAILED_MESSAGE"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                                                 }
@@ -196,7 +196,7 @@ public class MicrosoftAccountLoginner {
             String url = "";
             try {
                 url = "https://login.live.com/oauth20_authorize.srf" +
-                        "?client_id="+CLIENT_ID +
+                        "?client_id=" + CLIENT_ID +
                         "&response_type=code" +
                         "&scope=XboxLive.signin+offline_access" +
                         "&prompt=select_account" +

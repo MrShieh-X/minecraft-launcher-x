@@ -1,6 +1,5 @@
 package com.mrshiehx.mclx.modules.version;
 
-import com.mrshiehx.mclx.bean.Library;
 import com.mrshiehx.mclx.dialog.UnExitableDialog;
 import com.mrshiehx.mclx.modules.MinecraftLauncher;
 import com.mrshiehx.mclx.utils.OperatingSystem;
@@ -25,10 +24,10 @@ import static com.mrshiehx.mclx.utils.DownloadDialog.*;
 import static com.mrshiehx.mclx.MinecraftLauncherX.*;
 
 public class NativesReDownloader {
-    public static void reDownload(JFrame frame, File versionDir, JSONArray librariesJa){
+    public static void reDownload(JFrame frame, File versionDir, JSONArray librariesJa) {
         JProgressBar progressBar = createProgressBar();
         JTextArea textArea = createTextArea();
-        UnExitableDialog dialog = createDownloadDialog(frame, progressBar, textArea,getString("DIALOG_DOWNLOAD_LIBRARIES"));
+        UnExitableDialog dialog = createDownloadDialog(frame, progressBar, textArea, getString("DIALOG_DOWNLOAD_LIBRARIES"));
         dialog.addComponentListener(new ComponentAdapter() {
             @Override
             public void componentShown(ComponentEvent e) {
@@ -38,34 +37,34 @@ public class NativesReDownloader {
                         File tempNatives = new File("mclx", "temp_natives");
                         tempNatives.mkdirs();
 
-                        String textx=getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES");
+                        String textx = getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES");
                         //print(VersionInstaller.class,textx);
                         addLog(textArea, textx);
                         try {
                             if (librariesJa != null) {
-                                List<String> nativesNames=new ArrayList<>();
+                                List<String> nativesNames = new ArrayList<>();
                                 for (int i = 0; i < librariesJa.length(); i++) {
                                     JSONObject jsonObject = librariesJa.optJSONObject(i);
                                     if (jsonObject != null) {
-                                        boolean meet=true;
-                                        JSONArray rules=jsonObject.optJSONArray("rules");
-                                        if(rules!=null){
-                                            meet=MinecraftLauncher.isMeetConditions(rules,false,false);
+                                        boolean meet = true;
+                                        JSONArray rules = jsonObject.optJSONArray("rules");
+                                        if (rules != null) {
+                                            meet = MinecraftLauncher.isMeetConditions(rules, false, false);
                                         }
                                         //System.out.println(meet);
 
                                         JSONObject downloadsJo1 = jsonObject.optJSONObject("downloads");
-                                        if (meet&& downloadsJo1 != null) {
+                                        if (meet && downloadsJo1 != null) {
 
                                             JSONObject classifiersJo = downloadsJo1.optJSONObject("classifiers");
                                             if (classifiersJo != null) {
-                                                JSONObject nativesNamesJO=jsonObject.optJSONObject("natives");
+                                                JSONObject nativesNamesJO = jsonObject.optJSONObject("natives");
 
-                                                if(nativesNamesJO!=null) {
+                                                if (nativesNamesJO != null) {
 
                                                     //String osName = System.getProperty("os.name");
-                                                    JSONObject nativesJo = classifiersJo.optJSONObject(nativesNamesJO.optString(OperatingSystem.CURRENT_OS.getCheckedName()));;
-
+                                                    JSONObject nativesJo = classifiersJo.optJSONObject(nativesNamesJO.optString(OperatingSystem.CURRENT_OS.getCheckedName()));
+                                                    ;
 
 
                                                     if (nativesJo != null) {
@@ -78,7 +77,7 @@ public class NativesReDownloader {
                                                                     File nativeFile = new File(tempNatives, url1.substring(url1.lastIndexOf("/") + 1));
                                                                     //if(!nativeFile.exists()) {
                                                                     nativeFile.createNewFile();
-                                                                    String textxx=String.format(getString("MESSAGE_DOWNLOADING_FILE"),url1.substring(url1.lastIndexOf("/")+1));
+                                                                    String textxx = String.format(getString("MESSAGE_DOWNLOADING_FILE"), url1.substring(url1.lastIndexOf("/") + 1));
                                                                     //print(VersionInstaller.class,textxx);
                                                                     addLog(textArea, textxx);
                                                                     downloadFile(url1, nativeFile, progressBar);
@@ -87,7 +86,7 @@ public class NativesReDownloader {
                                                                 }
                                                             } catch (Exception e1) {
                                                                 e1.printStackTrace();
-                                                                String textxx=String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), url1);
+                                                                String textxx = String.format(getString("MESSAGE_FAILED_DOWNLOAD_FILE"), url1);
                                                                 //print(VersionInstaller.class,textxx);
                                                                 addLog(textArea, textxx);
                                                             }
@@ -119,7 +118,7 @@ public class NativesReDownloader {
                                 try {
                                     File dir = new File(tempNatives, file.getName().substring(0, file.getName().lastIndexOf(".")));
                                     dir.mkdirs();
-                                    String textxxx=String.format(getString("MESSAGE_UNZIPPING_FILE"),file.getName());
+                                    String textxxx = String.format(getString("MESSAGE_UNZIPPING_FILE"), file.getName());
                                     //print(VersionInstaller.class,text);
                                     addLog(textArea, textxxx);
                                     unZip(file, dir, progressBar);
@@ -156,22 +155,22 @@ public class NativesReDownloader {
                                 File[] files = file.listFiles(new FilenameFilter() {
                                     @Override
                                     public boolean accept(File dir, String name12) {
-                                        return name12.toLowerCase().endsWith(finalHouzhui)||name12.toLowerCase().endsWith(".jnilib");
+                                        return name12.toLowerCase().endsWith(finalHouzhui) || name12.toLowerCase().endsWith(".jnilib");
                                     }
                                 });
                                 libFiles.addAll(Arrays.asList(files));
                             }
                         }
 
-                        File nativesDir=new File(versionDir,Utils.getNativesDirName());
+                        File nativesDir = new File(versionDir, Utils.getNativesDirName());
                         nativesDir.mkdirs();
                         for (File file : libFiles) {
                             File to = new File(nativesDir, file.getName());
                             try {
-                                String textxxxxxx=String.format(getString("MESSAGE_COPYING_FILE"),file.getName(),to.getPath());
+                                String textxxxxxx = String.format(getString("MESSAGE_COPYING_FILE"), file.getName(), to.getPath());
                                 //print(VersionInstaller.class,text);
                                 addLog(textArea, textxxxxxx);
-                                if(to.exists())to.delete();
+                                if (to.exists()) to.delete();
                                 Utils.copyFile(file, to);
                             } catch (IOException e1) {
                                 e1.printStackTrace();
@@ -192,10 +191,10 @@ public class NativesReDownloader {
     }
 
     public static void addLog(JTextArea textArea, String message) {
-        print(NativesReDownloader.class,message);
+        print(NativesReDownloader.class, message);
         if (textArea != null) {
 
-            textArea.setText(textArea.getText() + "["+ new SimpleDateFormat("HH:mm:ss").format(new Date())+"]"+message + "\n");
+            textArea.setText(textArea.getText() + "[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" + message + "\n");
             Document doc = textArea.getDocument();
             textArea.setCaretPosition(doc.getLength());
         }

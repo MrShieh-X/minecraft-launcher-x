@@ -1,5 +1,5 @@
 package com.mrshiehx.mclx.interfaces;
 
-public interface Void{
+public interface Void {
     void execute();
 }

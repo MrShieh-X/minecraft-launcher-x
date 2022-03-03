@@ -16,8 +16,8 @@ import java.util.Base64;
 import static com.mrshiehx.mclx.MinecraftLauncherX.*;
 
 public class SkinDownloader {
-    public static void start(Component frame){
-        File file = Settings.selectSkin(frame,getString("DIALOG_DOWNLOAD_SKIN_FILE_TITLE"));
+    public static void start(Component frame) {
+        File file = Settings.selectSkin(frame, getString("DIALOG_DOWNLOAD_SKIN_FILE_TITLE"));
         if (file != null) {
             JSONObject jsonObject = new JSONObject();
             try {

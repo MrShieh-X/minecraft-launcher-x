@@ -6,7 +6,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -18,7 +17,7 @@ import static com.mrshiehx.mclx.MinecraftLauncherX.isEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 public class MojangAccountLoginner {
-    public static void loginMojangAccount(Settings frame,String account, boolean haveADialogToGetAccount, JSONObject jsonObject, String successText) {
+    public static void loginMojangAccount(Settings frame, String account, boolean haveADialogToGetAccount, JSONObject jsonObject, String successText) {
         if (haveADialogToGetAccount || account == null) account = JOptionPane.showInputDialog(
                 frame,
                 getString("DIALOG_OFFICIAL_LOGIN_TIP_ENTER_ACCOUNT_TEXT"),

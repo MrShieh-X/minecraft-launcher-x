@@ -8,7 +8,7 @@ import java.awt.*;
 import static com.mrshiehx.mclx.MinecraftLauncherX.getString;
 
 public class DownloadDialog {
-    public static JProgressBar createProgressBar(){
+    public static JProgressBar createProgressBar() {
         JProgressBar progressBar = new JProgressBar();
         progressBar.setBounds(10, 10, 464, 20);
 
@@ -23,7 +23,8 @@ public class DownloadDialog {
         progressBar.setBorderPainted(true);
         return progressBar;
     }
-    public static JTextArea createTextArea(){
+
+    public static JTextArea createTextArea() {
         JTextArea textArea = new JTextArea();
         textArea.setBounds(10, 40, 464, 230);
         textArea.setEditable(false);
@@ -36,15 +37,15 @@ public class DownloadDialog {
     public static UnExitableDialog createDownloadDialog(Frame owner, JProgressBar progressBar, JTextArea textArea) {
         return createDownloadDialog(owner, progressBar, textArea, getString("MENU_INSTALL_NEW_VERSION"));
     }
+
     public static UnExitableDialog createDownloadDialog(Frame owner, JProgressBar progressBar, JTextArea textArea, String title) {
         UnExitableDialog dialog = new UnExitableDialog(owner, title, true);
-        dialog.setSize(250*2, 160*2);
+        dialog.setSize(250 * 2, 160 * 2);
         dialog.setResizable(false);
         dialog.setLayout(null);
         dialog.setLocationRelativeTo(owner);
 
         //progressBar.setBackground(Color.pink);
-
 
 
         JScrollPane jsp = new JScrollPane(textArea);

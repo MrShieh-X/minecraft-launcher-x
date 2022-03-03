@@ -1,5 +1,9 @@
 # Update Logs
-Currently, the latest version is 1.4, which was updated on February 27, 2022.
+Currently, the latest version is 1.4.1, which was updated on March 3, 2022.
+
+## 1.4.1 (March 3, 2022)
+- Reduced Java version requirements.
+- Fixed some issues.
 
 ## 1.4 (February 27, 2022)
 - Fixed an issue what you could not log in to your Microsoft account.

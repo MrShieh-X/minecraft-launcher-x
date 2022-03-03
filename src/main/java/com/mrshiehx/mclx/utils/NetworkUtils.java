@@ -12,6 +12,7 @@ import java.util.Scanner;
 public class NetworkUtils {
     public static final String PARAMETER_SEPARATOR = "&";
     public static final String NAME_VALUE_SEPARATOR = "=";
+
     public static List<Pair<String, String>> parseQuery(URI uri) {
         return parseQuery(uri.getRawQuery());
     }

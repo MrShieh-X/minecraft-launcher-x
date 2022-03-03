@@ -12,7 +12,7 @@ import java.util.concurrent.ExecutionException;
 
 import static com.mrshiehx.mclx.MinecraftLauncherX.getString;
 
-public class MicrosoftAuthenticationServer extends NanoHTTPD{
+public class MicrosoftAuthenticationServer extends NanoHTTPD {
     private final int port;
     private final OnGotCode onGotCode;
     private final CompletableFuture<String> future = new CompletableFuture<>();
@@ -26,7 +26,7 @@ public class MicrosoftAuthenticationServer extends NanoHTTPD{
     }
 
     public String getRedirectURI() {
-        return ("http%3A%2F%2Flocalhost%3A"+port+"%2Fauthentication-response");
+        return ("http%3A%2F%2Flocalhost%3A" + port + "%2Fauthentication-response");
     }
 
     public String getCode() throws InterruptedException, ExecutionException {
@@ -40,30 +40,30 @@ public class MicrosoftAuthenticationServer extends NanoHTTPD{
         }
         Map<String, String> query = Utils.mapOf(NetworkUtils.parseQuery(session.getQueryParameterString()));
         if (query.containsKey("code")) {
-            String c=query.get("code");
-            if(onGotCode!=null)new Thread(()->onGotCode.onGotCode(c,getRedirectURI())).start();
+            String c = query.get("code");
+            if (onGotCode != null) new Thread(() -> onGotCode.onGotCode(c, getRedirectURI())).start();
             future.complete(c);
         } else {
             future.completeExceptionally(new AuthenticationException("failed to authenticate"));
         }
 
         String html;
-            html = "<!DOCTYPE html>\n" +
-                    "<html lang=\"en-US\">\n" +
-                    "<head>\n" +
-                    "    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n" +
-                    "    <title>"+getString("WEB_TITLE_LOGIN_MICROSOFT_ACCOUNT_RESPONSE")+"</title>\n" +
-                    "</head>\n" +
-                    "\n" +
-                    "<body>\n" +
-                    "    <div>"+getString("ON_AUTHENTICATED_PAGE_TEXT")+"</div>\n" +
-                    "\n" +
-                    "    <script>\n" +
-                    "        setTimeout(function() {open(\"about:blank\",\"_self\").close();}, 10000);\n" +
-                    "    </script>\n" +
-                    "</body>\n" +
-                    "\n" +
-                    "</html>";
+        html = "<!DOCTYPE html>\n" +
+                "<html lang=\"en-US\">\n" +
+                "<head>\n" +
+                "    <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n" +
+                "    <title>" + getString("WEB_TITLE_LOGIN_MICROSOFT_ACCOUNT_RESPONSE") + "</title>\n" +
+                "</head>\n" +
+                "\n" +
+                "<body>\n" +
+                "    <div>" + getString("ON_AUTHENTICATED_PAGE_TEXT") + "</div>\n" +
+                "\n" +
+                "    <script>\n" +
+                "        setTimeout(function() {open(\"about:blank\",\"_self\").close();}, 10000);\n" +
+                "    </script>\n" +
+                "</body>\n" +
+                "\n" +
+                "</html>";
         /*} catch (IOException e) {
             //System.out.println("Failed to load html");
             return newFixedLengthResponse(Response.Status.INTERNAL_ERROR, MIME_HTML, "");
@@ -79,7 +79,7 @@ public class MicrosoftAuthenticationServer extends NanoHTTPD{
         return newFixedLengthResponse(Response.Status.OK, "text/html; charset=UTF-8", html);
     }
 
-    public interface OnGotCode{
-        void onGotCode(String code,String redirect_uri);
+    public interface OnGotCode {
+        void onGotCode(String code, String redirect_uri);
     }
 }

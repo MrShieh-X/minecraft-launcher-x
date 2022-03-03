@@ -4,7 +4,12 @@ import org.json.JSONObject;
 
 import java.util.Objects;
 
-public record Library(JSONObject libraryJSONObject) {
+public class Library {
+    public final JSONObject libraryJSONObject;
+
+    public Library(JSONObject libraryJSONObject) {
+        this.libraryJSONObject = libraryJSONObject;
+    }
 
     @Override
     public boolean equals(Object o) {

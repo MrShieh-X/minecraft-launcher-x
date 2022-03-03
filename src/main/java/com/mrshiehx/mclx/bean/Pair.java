@@ -1,6 +1,6 @@
 package com.mrshiehx.mclx.bean;
 
-public class Pair<K,V> {
+public class Pair<K, V> {
     private final K key;
     private final V value;
 

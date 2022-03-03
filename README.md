@@ -11,19 +11,20 @@ Anyone can take advices of this program to me.
 
 ## Version
 The latest version: <br/>
-<b>1.4 (February 27, 2022)</b><br/>
+<b>1.4.1 (March 3, 2022)</b><br/>
 Historical version: <br/>
+<b>1.4.1 (March 3, 2022)</b><br/>
 <b>1.4 (February 27, 2022)</b><br/>
 <b>1.3 (September 21, 2021)</b><br/>
 <b>1.2 (Mar. 10, 2021)</b><br/>
 <b>1.1 (Mar. 5, 2021)</b><br/>
 <b>1.0 (Feb. 16, 2021) (First version)</b><br/>
 
-## The software configuration required for this program is:
-* Java 17 or higher
+## The software configuration required for this program
+* Java 8 or higher
 
 ## Supported languages
-- English (United States)
+- English
 - Simplified Chinese
 
 ## About Author

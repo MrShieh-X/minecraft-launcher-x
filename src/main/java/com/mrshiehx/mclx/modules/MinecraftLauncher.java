@@ -13,7 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.io.File;
 import java.io.IOException;
@@ -23,6 +22,8 @@ import java.util.*;
 import java.util.regex.Pattern;
 
 import static com.mrshiehx.mclx.MinecraftLauncherX.*;
+import static com.mrshiehx.mclx.utils.Utils.split;
+import static com.mrshiehx.mclx.utils.Utils.clearRedundantSpaces;
 
 public class MinecraftLauncher {
     /**
@@ -46,10 +47,10 @@ public class MinecraftLauncher {
      * @param customScreenSize         does player custom the size of screen
      * @param startLaunch              after judgment, prepare to start, nullable
      * @return Launch Command Arguments
-     * @throws LaunchException          launch exception
-     * @throws IOException              io or file exception
-     * @throws JSONException            exception to parsing json
-     * @throws LibraryDefectException   exception to if some libraries are not found
+     * @throws LaunchException        launch exception
+     * @throws IOException            io or file exception
+     * @throws JSONException          exception to parsing json
+     * @throws LibraryDefectException exception to if some libraries are not found
      * @author MrShiehX
      * @updateDate February 22, 2022
      */
@@ -117,7 +118,7 @@ public class MinecraftLauncher {
             SMDir.mkdirs();
         }*/
 
-        long physicalTotal = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean()).getTotalMemorySize() / 1048576;
+        long physicalTotal = ((OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean())./*getTotalMemorySize*/getTotalPhysicalMemorySize() / 1048576;
 
         if (maxMemory > physicalTotal) {
             throw new LaunchException(getString("EXCEPTION_MAX_MEMORY_TOO_BIG"));
@@ -137,21 +138,20 @@ public class MinecraftLauncher {
 
         JSONObject headJsonObject = new JSONObject(contentOfJsonFile);
 
-        JSONObject javaVersionJO=headJsonObject.optJSONObject("javaVersion");
-        int javaVersionInt=Utils.getJavaVersion(javaPath);
-        if(javaVersionInt>-1&&javaVersionJO!=null){
-            int majorVersion=javaVersionJO.optInt("majorVersion",-1);
-            if(majorVersion!=-1&&javaVersionInt<majorVersion){
-                throw new LaunchException(String.format(getString("EXCEPTION_JAVA_VERSION_TOO_LOW"),majorVersion,javaVersionInt));
+        JSONObject javaVersionJO = headJsonObject.optJSONObject("javaVersion");
+        int javaVersionInt = Utils.getJavaVersion(javaPath);
+        if (javaVersionInt > -1 && javaVersionJO != null) {
+            int majorVersion = javaVersionJO.optInt("majorVersion", -1);
+            if (majorVersion != -1 && javaVersionInt < majorVersion) {
+                throw new LaunchException(String.format(getString("EXCEPTION_JAVA_VERSION_TOO_LOW"), majorVersion, javaVersionInt));
             }
         }
-
 
 
         JSONArray libraries = headJsonObject.optJSONArray("libraries");
         File librariesFile = new File(gameDir, "libraries");
         List<String> librariesPaths = new ArrayList<>();
-        List<Library>notFound=new LinkedList<>();
+        List<Library> notFound = new LinkedList<>();
         //List<String> names = new ArrayList<>();
         for (int i = 0; i < libraries.length(); i++) {
             JSONObject library = libraries.optJSONObject(i);
@@ -173,9 +173,10 @@ public class MinecraftLauncher {
                     if (!librariesPaths.contains(libraryFile.getAbsolutePath())) {
                         librariesPaths.add(libraryFile.getAbsolutePath());
                     }
-                }else{
-                    Library lb=new Library(library);
-                    if(!notFound.contains(lb)&&library.has("downloads")&&library.optJSONObject("downloads").has("artifact"))notFound.add(lb);
+                } else {
+                    Library lb = new Library(library);
+                    if (!notFound.contains(lb) && library.has("downloads") && library.optJSONObject("downloads").has("artifact"))
+                        notFound.add(lb);
                     //等循环完成之后就抛出错误LibraryDefectException（notFound），返回之后提示要下载库
                 }
                 //names.add(libName);
@@ -183,7 +184,7 @@ public class MinecraftLauncher {
             }
         }
 
-        if(notFound.size()>0){
+        if (notFound.size() > 0) {
             throw new LibraryDefectException(notFound);
         }
 
@@ -220,10 +221,10 @@ public class MinecraftLauncher {
                     getGameArguments(headJsonObject, isDemo, customScreenSize, minecraftArguments);
                     getJavaVirtualMachineArguments(headJsonObject, isDemo, customScreenSize, jvmArguments);
                 } else {
-                    minecraftArguments.addAll(Arrays.asList(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")).split(" ")));
+                    minecraftArguments.addAll(Arrays.asList(split(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")))));
                 }
             } else {
-                minecraftArguments.addAll(Arrays.asList(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")).split(" ")));
+                minecraftArguments.addAll(Arrays.asList(split(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")))));
             }
         } else {
             char[] idChars = id.toCharArray();
@@ -233,14 +234,14 @@ public class MinecraftLauncher {
                     getGameArguments(headJsonObject, isDemo, customScreenSize, minecraftArguments);
                     getJavaVirtualMachineArguments(headJsonObject, isDemo, customScreenSize, jvmArguments);
                 } else if (Integer.parseInt(idsForSnapshot[0]) < 17) {
-                    minecraftArguments.addAll(Arrays.asList(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")).split(" ")));
+                    minecraftArguments.addAll(Arrays.asList(split(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")))));
                 } else /*if (Integer.parseInt(idsForSnapshot[0]) == 17) */ {
                     int partOfWeekNumber = Integer.parseInt(idsForSnapshot[1].substring(0,/*idsForSnapshot[1].length()-1*/numberOfAStringStartInteger(idsForSnapshot[1])));
                     if (partOfWeekNumber >= 43) {
                         getGameArguments(headJsonObject, isDemo, customScreenSize, minecraftArguments);
                         getJavaVirtualMachineArguments(headJsonObject, isDemo, customScreenSize, jvmArguments);
                     } else {
-                        minecraftArguments.addAll(Arrays.asList(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")).split(" ")));
+                        minecraftArguments.addAll(Arrays.asList(split(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")))));
                     }
                 }
             } else {
@@ -248,7 +249,7 @@ public class MinecraftLauncher {
                     getGameArguments(headJsonObject, isDemo, customScreenSize, minecraftArguments);
                     getJavaVirtualMachineArguments(headJsonObject, isDemo, customScreenSize, jvmArguments);
                 } else {
-                    minecraftArguments.addAll(Arrays.asList(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")).split(" ")));
+                    minecraftArguments.addAll(Arrays.asList(split(clearRedundantSpaces(headJsonObject.optString("minecraftArguments")))));
                 }
             }
         }
@@ -302,7 +303,7 @@ public class MinecraftLauncher {
             } else if (s.contains(source = "${assets_index_name}")) {
                 minecraftArguments.set(i, s.replace(source, assetsIndex));
             } else if (s.contains(source = "${auth_uuid}")) {
-                minecraftArguments.set(i, s.replace(source, isEmpty(uuid)?UUID.nameUUIDFromBytes(("OfflinePlayer:"+playerName).getBytes(StandardCharsets.UTF_8)).toString().replace("-",""):uuid));
+                minecraftArguments.set(i, s.replace(source, isEmpty(uuid) ? UUID.nameUUIDFromBytes(("OfflinePlayer:" + playerName).getBytes(StandardCharsets.UTF_8)).toString().replace("-", "") : uuid));
             } else if (s.contains(source = "${user_type}")) {
                 minecraftArguments.set(i, s.replace(source, "mojang"));
             } else if (s.contains(source = "${game_assets}")) {
@@ -417,8 +418,9 @@ public class MinecraftLauncher {
         }*/
 
 
-        File[]nativesFiles=nativesFolder.listFiles();
-        if (!nativesFolder.exists()||nativesFiles==null||nativesFiles.length==0) throw new EmptyNativesException(libraries);
+        File[] nativesFiles = nativesFolder.listFiles();
+        if (!nativesFolder.exists() || nativesFiles == null || nativesFiles.length == 0)
+            throw new EmptyNativesException(libraries);
 
         //String javaArgument;
         if (jvmArguments.size() > 0) {
@@ -502,7 +504,7 @@ public class MinecraftLauncher {
             EmptyNativesException,
             LaunchException,
             IOException,
-            JSONException{
+            JSONException {
         List<String> args = getMinecraftLaunchCommandArguments(minecraftJarFile,
                 minecraftVersionJsonFile,
                 gameDir,
@@ -537,8 +539,8 @@ public class MinecraftLauncher {
                 stringBuilder.append(" ");
             }
         }
-        String s=stringBuilder.toString();
-        print(MinecraftLauncher.class,String.format("Copy Launch Command: %s",s));
+        String s = stringBuilder.toString();
+        print(MinecraftLauncher.class, String.format("Copy Launch Command: %s", s));
         return s;
     }
 
@@ -594,16 +596,16 @@ public class MinecraftLauncher {
                             }
                         }
                         boolean base = true;
-                        boolean namae=false;
+                        boolean namae = false;
                         if (!isEmpty(name)) {
-                            base = (namae=name.equals(OperatingSystem.CURRENT_OS.getCheckedName()));
+                            base = (namae = name.equals(OperatingSystem.CURRENT_OS.getCheckedName()));
                         }
-                        if (base/*如果osname匹配了才能判断version是否匹配*/&&!isEmpty(version)) {
+                        if (base/*如果osname匹配了才能判断version是否匹配*/ && !isEmpty(version)) {
                             String sversion = /*OperatingSystem.SYSTEM_VERSION*/System.getProperty("os.version");
                             if ("^10\\.".equals(version)) {
                                 base = base && "10.0".equals(sversion);
                             } else {
-                                base=base&&Pattern.compile(version).matcher(sversion).matches();
+                                base = base && Pattern.compile(version).matcher(sversion).matches();
                             }
                             /*if (!Utils.isEmpty(sversion) && sversion.endsWith("0"))
                                 sversion = sversion.substring(0, sversion.length() - 1);
@@ -611,11 +613,11 @@ public class MinecraftLauncher {
                             base= base&&Pattern.matches(version, sversion);*/
                         }
                         if (!isEmpty(arch)) {
-                            if(!isEmpty(name)){
-                                if(namae){
+                            if (!isEmpty(name)) {
+                                if (namae) {
                                     base = base && arch.equals(System.getProperty("os.arch"));
                                 }
-                            }else {
+                            } else {
                                 base = base && arch.equals(System.getProperty("os.arch"));
                             }
                         }
@@ -701,10 +703,10 @@ public class MinecraftLauncher {
             EmptyNativesException,
             LaunchException,
             IOException,
-            JSONException{
+            JSONException {
         if (log != null) log.setText(null);
         StringBuilder stringBuilder = new StringBuilder();
-        List<String> args=getMinecraftLaunchCommandArguments(minecraftJarFile,
+        List<String> args = getMinecraftLaunchCommandArguments(minecraftJarFile,
                 minecraftVersionJsonFile,
                 gameDir,
                 assetsDir,
@@ -739,7 +741,7 @@ public class MinecraftLauncher {
                 stringBuilder.append(" ");
             }
         }
-        print(MinecraftLauncher.class,String.format("Launch Command: %s",stringBuilder));
+        print(MinecraftLauncher.class, String.format("Launch Command: %s", stringBuilder));
         ProcessBuilder processBuilder = new ProcessBuilder(args);
         processBuilder.redirectErrorStream(true);
         return processBuilder.start();
@@ -758,9 +760,11 @@ public class MinecraftLauncher {
         JSONObject argumentsArray = headJsonObject.optJSONObject("arguments");
         JSONArray array = argumentsArray.optJSONArray(name);
         for (int i = 0; i < array.length(); i++) {
-            if (array.opt(i) instanceof String a) {
+            Object obj = array.opt(i);
+            if (obj instanceof String) {
+                String a = (String) obj;
                 args.add(a);
-            } else if (array.opt(i) instanceof JSONObject) {
+            } else if (obj instanceof JSONObject) {
                 JSONObject jsonObject = array.optJSONObject(i);
                 if (jsonObject != null && jsonObject.has("value") && jsonObject.has("rules")) {
                     Object value = jsonObject.opt("value");
@@ -768,7 +772,8 @@ public class MinecraftLauncher {
                     if (value != null && rules != null) {
                         if (isMeetConditions(rules, isDemo, customScreenSize)) {
 
-                            if (value instanceof JSONArray value2) {
+                            if (value instanceof JSONArray) {
+                                JSONArray value2 = (JSONArray) value;
                                 for (int k = 0; k < value2.length(); k++) {
                                     if (value2.opt(k) instanceof String) {
                                         args.add(Utils.valueOf(value2.opt(k)));
@@ -786,61 +791,4 @@ public class MinecraftLauncher {
     }
 
 
-    private static String[] split(String src) {
-        List<String> list = new ArrayList<>();
-        /*List<Boolean> yinyongs=new ArrayList<>();
-        String[]split=src.split(String.valueOf(symbol));*/
-        boolean yinyong = false;
-        for (int i = 0; i < src.length(); i++) {
-            char str = src.charAt(i);
-            if (str == '\"') yinyong = !yinyong;
-            if (!yinyong) {
-                if (str != ' ') {
-                    if (i == 0) list.add(String.valueOf(str));
-                    else list.set(list.size() - 1, list.get(list.size() - 1) + str);
-                } else {
-                    list.add("");
-                }
-            } else {
-                list.set(list.size() - 1, list.get(list.size() - 1) + str);
-            }
-        }
-        return list.toArray(new String[0]);
-    }
-
-    private static String clearRedundantSpaces(String string) {
-        char[] sourceChars = string.toCharArray();
-        Object space = new Object();
-        Object[] objects = new Object[string.length()];
-        boolean yinyong = false;
-        for (int i = 0; i < sourceChars.length; i++) {
-            char cha = sourceChars[i];
-            if (cha == '\"') {
-                yinyong = !yinyong;
-            }
-            objects[i] = !yinyong && cha == ' ' ? space : cha;
-        }
-        List<Character> list = new ArrayList<>();
-        for (int i = 0; i < objects.length; i++) {
-            Object object = objects[i];
-            if (object == space) {
-                list.add(' ');
-                for (int j = i; j < objects.length; j++) {
-                    if (objects[j] != space) {
-                        i = j - 1;
-                        break;
-                    }
-                }
-
-            } else if (object instanceof Character) {
-                list.add((Character) object);
-            }
-        }
-
-        char[] chars = new char[list.size()];
-        for (int i = 0; i < list.size(); i++) {
-            chars[i] = list.get(i);
-        }
-        return new String(chars);
-    }
 }

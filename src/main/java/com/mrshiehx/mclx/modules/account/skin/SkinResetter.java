@@ -1,6 +1,5 @@
 package com.mrshiehx.mclx.modules.account.skin;
 
-import com.mrshiehx.mclx.settings.Settings;
 import com.mrshiehx.mclx.utils.Utils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -13,7 +12,7 @@ import static com.mrshiehx.mclx.MinecraftLauncherX.*;
 import static com.mrshiehx.mclx.MinecraftLauncherX.getString;
 
 public class SkinResetter {
-    public static void showDialog(Component frame){
+    public static void showDialog(Component frame) {
         JSONObject jsonObject = new JSONObject();
         try {
             jsonObject = new JSONObject(configContent);

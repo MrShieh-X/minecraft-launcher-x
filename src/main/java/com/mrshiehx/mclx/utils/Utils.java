@@ -7,7 +7,6 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -403,7 +402,7 @@ public class Utils {
                 }
                 return Integer.parseInt(version);
             }
-        }catch (Throwable e){
+        } catch (Throwable e) {
             e.printStackTrace();
         }
         return -1;
@@ -438,7 +437,78 @@ public class Utils {
         return sbf.toString();
     }
 
-    public static void exceptionDialog(JFrame frame,Throwable throwable){
-        JOptionPane.showMessageDialog(frame,throwable,getString("DIALOG_TITLE_NOTICE"),JOptionPane.ERROR_MESSAGE);
+    public static void exceptionDialog(JFrame frame, Throwable throwable) {
+        JOptionPane.showMessageDialog(frame, throwable, getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
+    }
+
+
+    public static String[] split(String src) {
+        List<String> list = new ArrayList<>();
+        /*List<Boolean> yinyongs=new ArrayList<>();
+        String[]split=src.split(String.valueOf(symbol));*/
+        boolean yinyong = false;
+        for (int i = 0; i < src.length(); i++) {
+            char str = src.charAt(i);
+            boolean modifiedYinyong = false;
+            if (str == '\"') {
+                yinyong = !yinyong;
+                modifiedYinyong = true;
+            }
+            if (!yinyong) {
+                if (!modifiedYinyong) {
+                    if (str != ' ') {
+                        if (i == 0) list.add(String.valueOf(str));
+                        else list.set(list.size() - 1, list.get(list.size() - 1) + str);
+                    } else {
+                        list.add("");
+                    }
+                }
+            } else {
+                if (!modifiedYinyong) {
+                    if (list.size() > 0) {
+                        list.set(list.size() - 1, list.get(list.size() - 1) + str);
+                    } else {
+                        list.add("" + str);
+                    }
+                }
+            }
+        }
+        return list.toArray(new String[0]);
+    }
+
+    public static String clearRedundantSpaces(String string) {
+        char[] sourceChars = string.toCharArray();
+        Object space = new Object();
+        Object[] objects = new Object[string.length()];
+        boolean yinyong = false;
+        for (int i = 0; i < sourceChars.length; i++) {
+            char cha = sourceChars[i];
+            if (cha == '\"') {
+                yinyong = !yinyong;
+            }
+            objects[i] = !yinyong && cha == ' ' ? space : cha;
+        }
+        List<Character> list = new ArrayList<>();
+        for (int i = 0; i < objects.length; i++) {
+            Object object = objects[i];
+            if (object == space) {
+                list.add(' ');
+                for (int j = i; j < objects.length; j++) {
+                    if (objects[j] != space) {
+                        i = j - 1;
+                        break;
+                    }
+                }
+
+            } else if (object instanceof Character) {
+                list.add((Character) object);
+            }
+        }
+
+        char[] chars = new char[list.size()];
+        for (int i = 0; i < list.size(); i++) {
+            chars[i] = list.get(i);
+        }
+        return new String(chars);
     }
 }

@@ -27,10 +27,7 @@ import java.awt.datatransfer.Clipboard;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.*;
-import java.lang.reflect.Array;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.text.SimpleDateFormat;
@@ -41,7 +38,6 @@ import java.util.zip.ZipFile;
 
 import static com.mrshiehx.mclx.modules.MinecraftLauncher.*;
 import static com.mrshiehx.mclx.utils.DownloadDialog.*;
-import static com.mrshiehx.mclx.utils.Utils.readFileContent;
 
 public class MinecraftLauncherX {
     public static final String CLIENT_ID = "bcb89757-1625-4561-8bc6-34d04a11a07f";
@@ -91,9 +87,9 @@ public class MinecraftLauncherX {
         if (icon != null) {
             frame.setIconImage(icon.getImage());
         }
-        int frameWidth=630;
-        int frameHeight=525;
-        Point framePoint=SwingUtils.getCenterLocation(frameWidth,frameHeight);
+        int frameWidth = 630;
+        int frameHeight = 525;
+        Point framePoint = SwingUtils.getCenterLocation(frameWidth, frameHeight);
         frame.setBounds(framePoint.x, framePoint.y, frameWidth, frameHeight);
         //Toolkit kit = Toolkit.getDefaultToolkit();
         //Dimension screenSize = kit.getScreenSize();
@@ -243,9 +239,10 @@ public class MinecraftLauncherX {
                                 !jsonObject.optBoolean("isFullscreen")));
                     } catch (EmptyNativesException ex) {
                         ex.printStackTrace();
-                        int se=JOptionPane.showConfirmDialog(frame,getString("DIALOG_NOT_FOUND_NATIVES_MESSAGE"),getString("DIALOG_TITLE_NOTICE"),JOptionPane.YES_NO_OPTION,JOptionPane.ERROR_MESSAGE,null);
-                        if(se==JOptionPane.YES_OPTION)NativesReDownloader.reDownload(frame,versionFolder,ex.libraries);
-                    }  catch (LibraryDefectException ex) {
+                        int se = JOptionPane.showConfirmDialog(frame, getString("DIALOG_NOT_FOUND_NATIVES_MESSAGE"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null);
+                        if (se == JOptionPane.YES_OPTION)
+                            NativesReDownloader.reDownload(frame, versionFolder, ex.libraries);
+                    } catch (LibraryDefectException ex) {
                         ex.printStackTrace();
                         defectLibrary(frame, ex.list);
                     } catch (LaunchException ex) {
@@ -282,8 +279,8 @@ public class MinecraftLauncherX {
         frame.setResizable(false);
 
         //versionChooser:startGame 8:7
-        versionChooser.setBounds(10, 10, /*200*//*250*/(frameWidth-50)/2, 30);
-        startGame.setBounds(20+(frameWidth-50)/2, 10, /*175*//*220*/(frameWidth-50)/2+5, 30);
+        versionChooser.setBounds(10, 10, /*200*//*250*/(frameWidth - 50) / 2, 30);
+        startGame.setBounds(20 + (frameWidth - 50) / 2, 10, /*175*//*220*/(frameWidth - 50) / 2 + 5, 30);
         startGame.setFont(new Font(null, Font.BOLD, 17));
         versionChooser.setFont(new Font(null, Font.PLAIN, 15));
         log.setBounds(10, 50, 594, 402);
@@ -373,9 +370,12 @@ public class MinecraftLauncherX {
                                     String line;
                                     try {
                                         while ((line = dis.readLine()) != null) {
-                                            if(line.contains("cannot be cast to class java.net.URLClassLoader")) crashError[0] =GameCrashError.URLClassLoader;//旧版本Minecraft的Java版本过高问题，报Exception in thread "main" java.lang.ClassCastException: class jdk.internal.loader.ClassLoaders$AppClassLoader cannot be cast to class java.net.URLClassLoader，因为在Java9对相关代码进行了修改，所以要用Java8及更旧
-                                            else if(line.contains("Failed to load a library. Possible solutions:")) crashError[0] =GameCrashError.LWJGLFailedLoad;
-                                            else if(line.contains("java.lang.OutOfMemoryError: Java heap space")||line.contains("Too small maximum heap"))crashError[0]=GameCrashError.MemoryTooSmall;
+                                            if (line.contains("cannot be cast to class java.net.URLClassLoader"))
+                                                crashError[0] = GameCrashError.URLClassLoader;//旧版本Minecraft的Java版本过高问题，报Exception in thread "main" java.lang.ClassCastException: class jdk.internal.loader.ClassLoaders$AppClassLoader cannot be cast to class java.net.URLClassLoader，因为在Java9对相关代码进行了修改，所以要用Java8及更旧
+                                            else if (line.contains("Failed to load a library. Possible solutions:"))
+                                                crashError[0] = GameCrashError.LWJGLFailedLoad;
+                                            else if (line.contains("java.lang.OutOfMemoryError: Java heap space") || line.contains("Too small maximum heap"))
+                                                crashError[0] = GameCrashError.MemoryTooSmall;
                                             //Log.d("result", line);
                                             //result += line;
                                             log.setText(log.getText() + line + "\n");
@@ -395,8 +395,8 @@ public class MinecraftLauncherX {
                                         startGame.setEnabled(true);
                                         versionChooser.setEnabled(true);
                                         log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
-                                        if(crashError[0] !=null){
-                                            log.setText(log.getText() +"\n\n"+String.format(getString("MESSAGE_GAME_CRASH_CAUSE_TIPS"),crashError[0].cause));
+                                        if (crashError[0] != null) {
+                                            log.setText(log.getText() + "\n\n" + String.format(getString("MESSAGE_GAME_CRASH_CAUSE_TIPS"), crashError[0].cause));
                                         }
                                         Document doc = log.getDocument();
                                         log.setCaretPosition(doc.getLength());
@@ -407,12 +407,13 @@ public class MinecraftLauncherX {
                             }).start();
                         } catch (EmptyNativesException ex) {
                             ex.printStackTrace();
-                            int se=JOptionPane.showConfirmDialog(frame,getString("DIALOG_NOT_FOUND_NATIVES_MESSAGE"),getString("DIALOG_TITLE_NOTICE"),JOptionPane.YES_NO_OPTION,JOptionPane.ERROR_MESSAGE,null);
-                            if(se==JOptionPane.YES_OPTION)NativesReDownloader.reDownload(frame,versionFolder,ex.libraries);
+                            int se = JOptionPane.showConfirmDialog(frame, getString("DIALOG_NOT_FOUND_NATIVES_MESSAGE"), getString("DIALOG_TITLE_NOTICE"), JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null);
+                            if (se == JOptionPane.YES_OPTION)
+                                NativesReDownloader.reDownload(frame, versionFolder, ex.libraries);
                             startGame.setEnabled(true);
                             versionChooser.setEnabled(true);
                             log.setText(log.getText() + getString("MESSAGE_FINISHED_GAME"));
-                        }  catch (LibraryDefectException ex) {
+                        } catch (LibraryDefectException ex) {
                             ex.printStackTrace();
                             defectLibrary(frame, ex.list);
                             startGame.setEnabled(true);
@@ -496,7 +497,7 @@ public class MinecraftLauncherX {
 
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < list.size(); i++) {
-                String s = list.get(i).libraryJSONObject().optString("name");
+                String s = list.get(i).libraryJSONObject.optString("name");
                 sb.append(s);
                 if (i + 1 != list.size()) {
                     sb.append('\n');
@@ -523,7 +524,7 @@ public class MinecraftLauncherX {
         } else if (select == 2) {
             JProgressBar progressBar = createProgressBar();
             JTextArea textArea = createTextArea();
-            UnExitableDialog dialog = createDownloadDialog(frame, progressBar, textArea,getString("DIALOG_DOWNLOAD_LIBRARIES"));
+            UnExitableDialog dialog = createDownloadDialog(frame, progressBar, textArea, getString("DIALOG_DOWNLOAD_LIBRARIES"));
             dialog.addComponentListener(new ComponentAdapter() {
                 @Override
                 public void componentShown(ComponentEvent e) {
@@ -537,10 +538,10 @@ public class MinecraftLauncherX {
                                 //System.out.println(assetsDir.getAbsolutePath());
                                 librariesDir.mkdirs();
 
-                                addLog("DownloadDefectLibrary",textArea, getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES"));
+                                addLog("DownloadDefectLibrary", textArea, getString("MESSAGE_INSTALL_DOWNLOADING_LIBRARIES"));
                                 if (list != null) {
                                     for (Library library : list) {
-                                        JSONObject jsonObject = library.libraryJSONObject();
+                                        JSONObject jsonObject = library.libraryJSONObject;
                                         if (jsonObject != null) {
                                             boolean meet = true;
                                             JSONArray rules = jsonObject.optJSONArray("rules");
@@ -563,14 +564,14 @@ public class MinecraftLauncherX {
                                                                 file.createNewFile();
                                                             }
                                                             if (file.length() == 0) {
-                                                                String text=String.format(getString("MESSAGE_DOWNLOADING_FILE"), url.substring(url.lastIndexOf("/")+1));
+                                                                String text = String.format(getString("MESSAGE_DOWNLOADING_FILE"), url.substring(url.lastIndexOf("/") + 1));
                                                                 //print("DownloadDefectLibrary",text);
-                                                                addLog("DownloadDefectLibrary",textArea, text);
+                                                                addLog("DownloadDefectLibrary", textArea, text);
                                                                 downloadFile(url, file, progressBar);
                                                             }
                                                         } catch (Exception e) {
                                                             e.printStackTrace();
-                                                            addLog("DownloadDefectLibrary",textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARY"), url, e));
+                                                            addLog("DownloadDefectLibrary", textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARY"), url, e));
                                                         }
                                                     }
                                                 }
@@ -579,14 +580,14 @@ public class MinecraftLauncherX {
                                             }
                                         }
                                     }
-                                    addLog("DownloadDefectLibrary",textArea, getString("MESSAGE_INSTALL_DOWNLOADED_LIBRARIES"));
+                                    addLog("DownloadDefectLibrary", textArea, getString("MESSAGE_INSTALL_DOWNLOADED_LIBRARIES"));
                                 } else {
-                                    addLog("DownloadDefectLibrary",textArea, getString("MESSAGE_INSTALL_LIBRARIES_LIST_EMPTY"));
+                                    addLog("DownloadDefectLibrary", textArea, getString("MESSAGE_INSTALL_LIBRARIES_LIST_EMPTY"));
                                 }
 
                             } catch (Exception ex) {
                                 ex.printStackTrace();
-                                addLog("DownloadDefectLibrary",textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARIES"), e));
+                                addLog("DownloadDefectLibrary", textArea, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARIES"), e));
                                 JOptionPane.showMessageDialog(frame, String.format(getString("MESSAGE_INSTALL_FAILED_TO_DOWNLOAD_LIBRARIES"), e), getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
                             }
                             progressBar.setValue(progressBar.getMaximum());
@@ -697,7 +698,6 @@ public class MinecraftLauncherX {
         smDir = new File(gameDir, "simplemods");
         versionsDir = new File(gameDir, "versions");
     }
-
 
 
     public static int numberOfAStringStartInteger(String target) {
@@ -826,10 +826,10 @@ public class MinecraftLauncherX {
     }
 
 
-    public static void addLog(String moduleName,JTextArea textArea, String message) {
-        print(moduleName,message);
+    public static void addLog(String moduleName, JTextArea textArea, String message) {
+        print(moduleName, message);
         if (textArea != null) {
-            textArea.setText(textArea.getText() + "["+ new SimpleDateFormat("HH:mm:ss").format(new Date())+"]"+message + "\n");
+            textArea.setText(textArea.getText() + "[" + new SimpleDateFormat("HH:mm:ss").format(new Date()) + "]" + message + "\n");
 
             Document doc = textArea.getDocument();
             textArea.setCaretPosition(doc.getLength());
@@ -983,19 +983,20 @@ public class MinecraftLauncherX {
         JOptionPane.showMessageDialog(frame, message, titleIfEmptyNotice != null ? titleIfEmptyNotice : getString("DIALOG_TITLE_NOTICE"), JOptionPane.ERROR_MESSAGE);
     }
 
-    public static void print(Class<?>clazz,String content){
-        print(clazz.getSimpleName(),content);
+    public static void print(Class<?> clazz, String content) {
+        print(clazz.getSimpleName(), content);
     }
-    public static void print(String moduleName,String content){
-        String base="[%s|%s]%s\n";
+
+    public static void print(String moduleName, String content) {
+        String base = "[%s|%s]%s\n";
 
         Date now = new Date(); // 创建一个Date对象，获取当前时间
         // 指定格式化格式
         SimpleDateFormat f = new SimpleDateFormat("HH:mm:ss");
-        String time=f.format(now);
+        String time = f.format(now);
 
 
-        System.out.printf(base,time,moduleName,content);
+        System.out.printf(base, time, moduleName, content);
     }
 
 }

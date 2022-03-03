@@ -6,6 +6,7 @@ import java.awt.event.WindowEvent;
 
 public class UnExitableDialog extends JDialog {
     private boolean exitable;
+
     public UnExitableDialog(Frame owner, String title, boolean modal) {
         super(owner, title, modal);
     }
@@ -17,7 +18,7 @@ public class UnExitableDialog extends JDialog {
     @Override
     protected void processWindowEvent(WindowEvent e) {
         if (e.getID() == WindowEvent.WINDOW_CLOSING) {
-            if(exitable)
+            if (exitable)
                 this.setVisible(false);
         } else {
             super.processWindowEvent(e);
