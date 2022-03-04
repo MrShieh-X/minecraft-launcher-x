@@ -58,7 +58,7 @@ public class MinecraftLauncherX {
     public static String configContent = "";
     public static String javaPath = "";
 
-    public static String MCLX_VERSION = "1.4";
+    public static String MCLX_VERSION = "1.4.1";
 
     public static final ImageIcon icon;
 
